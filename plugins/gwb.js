@@ -1,6 +1,9 @@
-const { cmd } = require('../command');
-const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
-const { readEnv } = require('../lib/database');
+const { Client } = require('@whiskeysockets/baileys'); // Ensure you have the correct package installed
+const { readEnv } = require('../lib/database'); // Importing readEnv from the database module
+const { cmd, commands } = require('../command'); // Importing command functionalities
+const os = require("os"); // OS module for system-related utility
+const { runtime } = require('../lib/functions'); // Importing runtime functions
+const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs'); // Update this path as needed
 
 // Function to send welcome message to new members
 const sendWelcomeMessage = async (conn, groupId, memberId) => {
@@ -41,10 +44,25 @@ const initializeWelcomeFunctionality = async (conn) => {
     }
 };
 
-// Example connection logic (replace this with your actual connection logic)
+// Function to create a WhatsApp connection
+const createWhatsAppConnection = async () => {
+    const conn = new Client(); // Create a new client instance
+    conn.on('qr', (qr) => {
+        console.log('QR RECEIVED', qr); // Implement QR code handling here
+        // You might want to add a way to display or scan this QR code
+    });
+
+    conn.on('ready', () => {
+        console.log('WhatsApp connected');
+    });
+
+    await conn.connect(); // Connect to WhatsApp
+    return conn; // Return the connection object
+};
+
+// Example connection logic
 const connectToWhatsApp = async () => {
-    // Replace with actual connection logic
-    const conn = await createWhatsAppConnection(); // This function should establish and return your WhatsApp connection
+    const conn = await createWhatsAppConnection(); // Establish and return your WhatsApp connection
     await initializeWelcomeFunctionality(conn); // Start the welcome functionality based on the config
 };
 
