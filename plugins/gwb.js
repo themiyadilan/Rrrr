@@ -4,8 +4,12 @@ const { readEnv } = require('../lib/database');
 
 // Function to send welcome message to new members
 const sendWelcomeMessage = async (conn, groupId, memberId) => {
-    const welcomeMessage = `*Welcome to the group, @${memberId.split('@')[0]}! 🎉*\nFeel free to introduce yourself and have fun! ✨\n${sensitiveData.footerText}`;
-    await conn.sendMessage(groupId, { text: welcomeMessage, mentions: [memberId] });
+    try {
+        const welcomeMessage = `*Welcome to the group, @${memberId.split('@')[0]}! 🎉*\nFeel free to introduce yourself and have fun! ✨\n${sensitiveData.footerText}`;
+        await conn.sendMessage(groupId, { text: welcomeMessage, mentions: [memberId] });
+    } catch (error) {
+        console.error(`Error sending welcome message to ${memberId}:`, error);
+    }
 };
 
 // Event listener for new group participants
@@ -24,6 +28,8 @@ const registerGroupWelcomeListener = (conn) => {
 const initializeWelcomeFunctionality = async (conn) => {
     try {
         const config = await readEnv(); // Get the latest configuration
+        console.log('Current config:', config); // Log the config for debugging
+
         if (config.WELCOME === 'true') {
             registerGroupWelcomeListener(conn); // Register the listener if WELCOME is true
             console.log('Welcome messages are enabled!'); // Optional: log to console
