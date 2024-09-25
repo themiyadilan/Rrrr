@@ -13,22 +13,25 @@ const registerGroupWelcomeListener = (conn) => {
     conn.ev.on('group-participants.update', async (update) => {
         const { id, participants, action } = update; // id = group id, participants = new members, action = add/remove
         if (action === 'add') {  // Check if the action is a new member joining
-            participants.forEach(async (participant) => {
+            for (const participant of participants) {
                 await sendWelcomeMessage(conn, id, participant);  // Send welcome message to each new member
-            });
+            }
         }
     });
 };
 
 // Function to initialize welcome functionality based on configuration
 const initializeWelcomeFunctionality = async (conn) => {
-    const config = await readEnv(); // Get the latest configuration
-
-    if (config.WELCOME === 'true') {
-        registerGroupWelcomeListener(conn); // Register the listener if WELCOME is true
-        console.log('Welcome messages are enabled!'); // Optional: log to console
-    } else {
-        console.log('Welcome messages are disabled.'); // Optional: log to console
+    try {
+        const config = await readEnv(); // Get the latest configuration
+        if (config.WELCOME === 'true') {
+            registerGroupWelcomeListener(conn); // Register the listener if WELCOME is true
+            console.log('Welcome messages are enabled!'); // Optional: log to console
+        } else {
+            console.log('Welcome messages are disabled.'); // Optional: log to console
+        }
+    } catch (error) {
+        console.error('Error initializing welcome functionality:', error);
     }
 };
 
