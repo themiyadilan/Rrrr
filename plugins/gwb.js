@@ -41,8 +41,12 @@ const initializeWelcomeFunctionality = async (conn) => {
     }
 };
 
-// Example of calling the initialization function in your main file
-(async () => {
-    const conn = /* Your connection logic here */;
+// Example connection logic (replace this with your actual connection logic)
+const connectToWhatsApp = async () => {
+    // Replace with actual connection logic
+    const conn = await createWhatsAppConnection(); // This function should establish and return your WhatsApp connection
     await initializeWelcomeFunctionality(conn); // Start the welcome functionality based on the config
-})();
+};
+
+// Start the connection
+connectToWhatsApp().catch(console.error);
