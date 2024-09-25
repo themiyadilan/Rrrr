@@ -24,7 +24,7 @@ const registerGroupWelcomeListener = (conn) => {
         const groupMetadata = await conn.groupMetadata(id); // Get group metadata (name, description)
 
         // Only send welcome message if WELCOME_MSG is enabled
-        if (action === 'add' && config.WELCOME_MSG === 'true') {  
+        if (action === 'add' && config.WELCOME === 'true') {  
             participants.forEach(async (participant) => {
                 await sendWelcomeMessage(conn, id, participant, groupMetadata);  // Send welcome message to each new member
             });
