@@ -1,5 +1,6 @@
 const { cmd } = require('../command');
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
+const { readEnv } = require('../lib/database');
 
 // Function to send welcome message to new members
 const sendWelcomeMessage = async (conn, groupId, memberId) => {
@@ -19,20 +20,20 @@ const registerGroupWelcomeListener = (conn) => {
     });
 };
 
-// Example of registering the event listener in your main file
-cmd({ pattern: "welcome", react: "👋", desc: "Send a welcome message when a new member joins the group", category: "group", use: '.greet', filename: __filename }, 
-async (conn, mek, m, { from, isGroup, isBotAdmins, isAdmins, reply }) => {
-    try {
-        if (!isGroup) return reply('This command can only be used in a group. 🚫');
-        if (!isBotAdmins) return reply('Bot must be an admin to use this command. 🤖');
-        if (!isAdmins) return reply('Only admins can use this command. 👮‍♂️');
+// Function to initialize welcome functionality based on configuration
+const initializeWelcomeFunctionality = async (conn) => {
+    const config = await readEnv(); // Get the latest configuration
 
-        // Register the event listener for new participants
-        registerGroupWelcomeListener(conn);
-
-        reply('Welcome message functionality activated! 🥳');
-    } catch (e) {
-        reply('Error setting up welcome messages. ⚠️');
-        console.log(e);
+    if (config.WELCOME === 'true') {
+        registerGroupWelcomeListener(conn); // Register the listener if WELCOME is true
+        console.log('Welcome messages are enabled!'); // Optional: log to console
+    } else {
+        console.log('Welcome messages are disabled.'); // Optional: log to console
     }
-});
+};
+
+// Example of calling the initialization function in your main file
+(async () => {
+    const conn = /* Your connection logic here */;
+    await initializeWelcomeFunctionality(conn); // Start the welcome functionality based on the config
+})();
