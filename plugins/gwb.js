@@ -1,4 +1,4 @@
-const { cmd } = require('../command'); // Remove if you're not using any commands
+const { cmd } = require('../command');
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
 
 // Function to send welcome message to new members
@@ -19,15 +19,20 @@ const registerGroupWelcomeListener = (conn) => {
     });
 };
 
-// Automatically register the event listener when the bot starts
-const initializeBot = (conn) => {
-    registerGroupWelcomeListener(conn);
-};
+// Example of registering the event listener in your main file
+cmd({ pattern: "welcome", react: "👋", desc: "Send a welcome message when a new member joins the group", category: "group", use: '.greet', filename: __filename }, 
+async (conn, mek, m, { from, isGroup, isBotAdmins, isAdmins, reply }) => {
+    try {
+        if (!isGroup) return reply('This command can only be used in a group. 🚫');
+        if (!isBotAdmins) return reply('Bot must be an admin to use this command. 🤖');
+        if (!isAdmins) return reply('Only admins can use this command. 👮‍♂️');
 
-// Export or invoke the function as needed in your main file
-module.exports = {
-    initializeBot,
-};
+        // Register the event listener for new participants
+        registerGroupWelcomeListener(conn);
 
-// Example of how to invoke the initialization in your main file
-// In your main bot file, you would call `initializeBot(conn);` to set up the listener.
+        reply('Welcome message functionality activated! 🥳');
+    } catch (e) {
+        reply('Error setting up welcome messages. ⚠️');
+        console.log(e);
+    }
+});
