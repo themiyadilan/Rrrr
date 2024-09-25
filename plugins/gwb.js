@@ -1,4 +1,4 @@
-const { Client } = require('@whiskeysockets/baileys'); // Ensure you have the correct package installed
+const { makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys'); // Adjust imports based on library documentation
 const { readEnv } = require('../lib/database'); // Importing readEnv from the database module
 const { cmd, commands } = require('../command'); // Importing command functionalities
 const os = require("os"); // OS module for system-related utility
@@ -46,14 +46,26 @@ const initializeWelcomeFunctionality = async (conn) => {
 
 // Function to create a WhatsApp connection
 const createWhatsAppConnection = async () => {
-    const conn = new Client(); // Create a new client instance
-    conn.on('qr', (qr) => {
+    const { state, saveState } = await useMultiFileAuthState('./auth_info'); // Manage authentication state
+    const conn = makeWASocket({ auth: state }); // Create a new socket instance
+
+    conn.ev.on('qr', (qr) => {
         console.log('QR RECEIVED', qr); // Implement QR code handling here
         // You might want to add a way to display or scan this QR code
     });
 
-    conn.on('ready', () => {
+    conn.ev.on('open', () => {
         console.log('WhatsApp connected');
+    });
+
+    conn.ev.on('close', async () => {
+        console.log('Connection closed. Attempting to reconnect...');
+        await connectToWhatsApp(); // Optionally handle reconnection
+    });
+
+    conn.ev.on('authenticated', (session) => {
+        console.log('Authenticated successfully!', session);
+        saveState(session); // Save the session for future connections
     });
 
     await conn.connect(); // Connect to WhatsApp
