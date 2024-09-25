@@ -20,7 +20,7 @@ cmd({
         let readmore = "\u200B".repeat(4000); // This creates a large gap between text
 
         // Full message to send
-        let replyText = `... Readmore\n\n${readmore}${readmoreText}`;
+        let replyText = `${readmore}${readmoreText}`;
 
         // Send the message with the "Readmore" functionality
         await conn.sendMessage(from, { text: replyText }, { quoted: mek });
