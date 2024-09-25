@@ -68,7 +68,7 @@ const createWhatsAppConnection = async () => {
         saveState(session); // Save the session for future connections
     });
 
-    await conn.connect(); // Connect to WhatsApp
+    // Automatically connect; the connection happens internally with makeWASocket
     return conn; // Return the connection object
 };
 
