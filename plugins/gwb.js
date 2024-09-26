@@ -21,7 +21,7 @@ const sendWelcomeMessage = async (conn, from, memberId, mek) => {
     let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
 
     // Full message with "Read more" effect
-    let replyText = `*Hey 🫂♥️ @${memberId.split('@')[0]}*\n*Welcome to Group.. ⤵️*\n${readmore}${readmoreText}`;
+    let replyText = `*Hey 🫂♥️ @${memberId.split('@')[0]}*\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
     // Send the message with "Read more" functionality
     await conn.sendMessage(from, { text: replyText, mentions: [memberId] }, { quoted: mek });
