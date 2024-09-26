@@ -23,6 +23,7 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
         // Fetch group or member profile picture
         let imageUrl = '';
         try {
+            console.log(`Fetching profile picture for ${memberIds.length > 1 ? 'group' : 'member'}: ${memberIds.length > 1 ? from : memberIds[0]}`);
             if (memberIds.length > 1) {
                 imageUrl = await conn.profilePictureUrl(from, 'image');
             } else {
@@ -30,9 +31,9 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
                 imageUrl = await conn.profilePictureUrl(memberId, 'image');
             }
         } catch (error) {
-            console.log("Error fetching profile picture, using default.");
+            console.error(`Error fetching profile picture for ${memberIds.length > 1 ? 'group' : 'member'}:`, error);
             // Use a valid default image URL or local path
-            imageUrl = 'https://telegra.ph/file/94055e3a7e18f50199374.jpg'; // Replace with your valid image URL or path
+            imageUrl = 'https://telegra.ph/file/94055e3a7e18f50199374.jpg'; // Ensure this URL is accessible
         }
 
         let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
@@ -65,11 +66,11 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
         
         // Check if WELCOME is enabled in config
         if (config.WELCOME === 'true') {
-            if (isOwner) return;
+            if (isOwner) return; // Prevents the owner from triggering the welcome message
             registerGroupWelcomeListener(conn);
         }
     } catch (e) {
-        console.log(e);
+        console.error("Error in main command handler:", e);
         await m.reply(`Error: ${e.message}`);
     }
 });
