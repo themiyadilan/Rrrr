@@ -10,7 +10,16 @@ let listenerRegistered = false; // Flag to ensure the listener is registered onl
 
 // Function to send welcome message to new members
 const sendWelcomeMessage = async (conn, groupId, memberId) => {
-    const welcomeMessage = `*Welcome to the group, @${memberId.split('@')[0]}! 🎉*\nFeel free to introduce yourself and have fun! ✨\n${sensitiveData.footerText}`;
+    const groupMetadata = await conn.groupMetadata(groupId);  // Get group metadata
+    const groupName = groupMetadata.subject;  // Get the group name
+    const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
+
+    const welcomeMessage = `*Hey 🫂♥️ @${memberId.split('@')[0]}* \n` +
+        `*Welcome to Group ⤵️*\n\n` +
+        `*Name :*\n${groupName}\n\n` +
+        `*Description :*\n${groupDesc}\n\n` +
+        `${sensitiveData.footerText || 'ᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ'}`;
+        
     await conn.sendMessage(groupId, { text: welcomeMessage, mentions: [memberId] });
 };
 
