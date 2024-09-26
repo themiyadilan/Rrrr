@@ -18,10 +18,10 @@ const sendWelcomeMessage = async (conn, from, memberId, mek) => {
     let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
 
     // Prepare the text that will be shown after clicking "Read more"
-    let readmoreText = `\n\n*Name :* ${groupName}\n\n*Description :* ${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
+    let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
 
     // Full message with "Read more" effect
-    let replyText = `*Hey 🫂♥️ @${memberId.split('@')[0]}*\nWelcome to Group ⤵️${readmore}${readmoreText}`;
+    let replyText = `*Hey 🫂♥️ @${memberId.split('@')[0]}*\n*Welcome to Group.. ⤵️*\n${readmore}${readmoreText}`;
 
     // Send the message with "Read more" functionality
     await conn.sendMessage(from, { text: replyText, mentions: [memberId] }, { quoted: mek });
