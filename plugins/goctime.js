@@ -1,1 +1,89 @@
+const schedule = require('node-schedule');
+const moment = require('moment-timezone');
+const { readEnv } = require('../lib/database');
+const { cmd } = require('../command'); // Adjust the path if needed
+
+// Set timezone for calculations
+const TIMEZONE = 'Asia/Colombo';
+
+// Function to adjust the time by subtracting 5 hours and 30 minutes
+function adjustTime(time) {
+    const [hour, minute] = time.split(':').map(Number);
+    return moment.tz({ hour, minute }, TIMEZONE).subtract(5, 'hours').subtract(30, 'minutes').format('HH:mm');
+}
+
+// Function to schedule open and close times for a group
+function scheduleGroupTimes(conn, groupId, openTimes, closeTimes) {
+    openTimes.forEach((openTime) => {
+        const adjustedOpenTime = adjustTime(openTime);
+        const [adjustedHour, adjustedMinute] = adjustedOpenTime.split(':').map(Number);
+        const openCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+
+        // Schedule opening the group
+        schedule.scheduleJob(`${groupId}_openGroup_${openTime}`, openCron, async () => {
+            await conn.groupSettingUpdate(groupId, 'not_announcement');  // Open the group
+            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻𝗲𝗱 𝗮𝘁 ${openTime}. 🔓*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
+        });
+    });
+
+    closeTimes.forEach((closeTime) => {
+        const adjustedCloseTime = adjustTime(closeTime);
+        const [adjustedHour, adjustedMinute] = adjustedCloseTime.split(':').map(Number);
+        const closeCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+
+        // Schedule closing the group
+        schedule.scheduleJob(`${groupId}_closeGroup_${closeTime}`, closeCron, async () => {
+            await conn.groupSettingUpdate(groupId, 'announcement');  // Close the group
+            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
+        });
+    });
+}
+
+// Function to parse and schedule group times
+async function setupGroupSchedules(conn) {
+    const config = await readEnv();
+    const groupTimes = config.GROUPS_TIMES;
+
+    // Check if GROUPS_TIMES is defined
+    if (!groupTimes) {
+        throw new Error('GROUPS_TIMES is not defined in the environment variables.');
+    }
+
+    // Parse GROUPS_TIMES config
+    const groups = groupTimes.split('/').map(entry => {
+        const parts = entry.match(/(.*?)/g);
+        if (!parts || parts.length < 3) {
+            throw new Error(`Invalid entry in GROUPS_TIMES: ${entry}`);
+        }
+        return {
+            groupId: parts[0].replace(/[()]/g, ''),   // Extract group ID
+            openTimes: parts[1].replace(/[()]/g, '').split(','),  // Extract open times
+            closeTimes: parts[2].replace(/[()]/g, '').split(',')  // Extract close times
+        };
+    });
+
+    // Schedule open and close times for each group
+    groups.forEach(({ groupId, openTimes, closeTimes }) => {
+        scheduleGroupTimes(conn, groupId, openTimes, closeTimes);
+    });
+}
+
+// Command to execute the group schedule setup
+cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
+    try {
+        // Only allow the owner to trigger the scheduling setup
+        if (!isOwner) return;
+
+        // Set up schedules for groups
+        await setupGroupSchedules(conn);
+
+        // Confirmation message
+        await conn.sendMessage(from, { text: 'Group schedules have been set up successfully!' });
+    } catch (error) {
+        console.error('Error setting up group schedules:', error);
+        await conn.sendMessage(from, { text: `Error: ${error.message}` });
+    }
+});
+
+
 
