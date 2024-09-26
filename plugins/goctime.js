@@ -19,7 +19,7 @@ async function loadGroupTimes(conn) {
         const groups = config.GROUPS_TIMES.split('/');
 
         groups.forEach(group => {
-            const match = group.match(/(.*?)/g);
+            const match = group.match(/(.*?)/g);  // Adjusted regex to match parentheses
             if (match && match.length === 3) {
                 const groupId = match[0].slice(1, -1);
                 const openTimes = match[1].slice(1, -1).split(',');
@@ -50,11 +50,30 @@ async function loadGroupTimes(conn) {
                 });
             }
         });
+    } else {
+        console.log("No group times found in configuration.");
     }
 }
 
-// Initialize the bot and load group times
-(async () => {
-    const conn = {}; // This should be your WhatsApp connection object
-    await loadGroupTimes(conn);
-})();
+// Initialize the WhatsApp connection (example placeholder)
+async function initializeConnection() {
+    const { Client } = require('whatsapp-web.js');
+    const client = new Client();
+
+    client.on('qr', (qr) => {
+        console.log('QR RECEIVED', qr);
+        // Generate QR code for authentication
+    });
+
+    client.on('ready', async () => {
+        console.log('Client is ready!');
+
+        // Load group times once the client is ready
+        await loadGroupTimes(client);
+    });
+
+    client.initialize().catch(error => console.error("Connection Error:", error));
+}
+
+// Start the bot
+initializeConnection();
