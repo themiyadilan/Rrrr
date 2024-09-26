@@ -21,7 +21,7 @@ const sendWelcomeMessage = async (conn, from, memberIds, mek) => {
     let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
 
     // Format the welcome message to include mentions for each new member
-    const welcomeMentions = memberIds.map(id => `_(mention ${id.split('@')[0]})_`).join('\n');  // Prepare mentions
+    const welcomeMentions = memberIds.map(id => `@${id.split('@')[0]}`).join('\n');  // Prepare mentions
 
     // Full message with "Read more" effect
     let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
