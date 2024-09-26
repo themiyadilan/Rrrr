@@ -9,7 +9,7 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
 // Function to send a welcome message to new members with "read more" functionality
-const sendWelcomeMessage = async (conn, from, memberIds, mek) => {
+const sendWelcomeMessage = async (conn, from, memberIds) => {
     try {
         const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
         const groupName = groupMetadata.subject;  // Get the group name
@@ -28,7 +28,7 @@ const sendWelcomeMessage = async (conn, from, memberIds, mek) => {
         let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
         // Send the message with "Read more" functionality
-        await conn.sendMessage(from, { text: replyText, mentions: memberIds }, { quoted: mek });
+        await conn.sendMessage(from, { text: replyText, mentions: memberIds });
     } catch (error) {
         console.error("Error sending welcome message:", error);  // Log the error for debugging
     }
@@ -41,7 +41,7 @@ const registerGroupWelcomeListener = (conn) => {
             const { id, participants, action } = update;  // id = group id, participants = new members, action = add/remove
             if (action === 'add' && participants.length > 0) {  // Check if the action is a new member joining
                 console.log("New participants:", participants);  // Log new participants
-                await sendWelcomeMessage(conn, id, participants, update);  // Send welcome message to all new members
+                await sendWelcomeMessage(conn, id, participants);  // Send welcome message to all new members
             }
         });
         listenerRegistered = true;  // Set the flag to true after registering the listener
