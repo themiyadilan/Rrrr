@@ -6,6 +6,8 @@ const { cmd, commands } = require('../command');  // Handles command functionali
 const { fetchJson } = require('../lib/functions'); // Fetches JSON data from a URL
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure this path is correct
 
+let listenerRegistered = false; // Flag to ensure the listener is registered only once
+
 // Function to send welcome message to new members
 const sendWelcomeMessage = async (conn, groupId, memberId) => {
     const welcomeMessage = `*Welcome to the group, @${memberId.split('@')[0]}! 🎉*\nFeel free to introduce yourself and have fun! ✨\n${sensitiveData.footerText}`;
@@ -14,15 +16,17 @@ const sendWelcomeMessage = async (conn, groupId, memberId) => {
 
 // Event listener for new group participants
 const registerGroupWelcomeListener = (conn) => {
-    conn.ev.on('group-participants.update', async (update) => {
-        const { id, participants, action } = update;  // id = group id, participants = new members, action = add/remove
-        if (action === 'add') {  // Check if the action is a new member joining
-            // Use a for...of loop to handle async operations properly
-            for (const participant of participants) {
-                await sendWelcomeMessage(conn, id, participant);  // Send welcome message to each new member
+    if (!listenerRegistered) {  // Check if the listener is already registered
+        conn.ev.on('group-participants.update', async (update) => {
+            const { id, participants, action } = update;  // id = group id, participants = new members, action = add/remove
+            if (action === 'add') {  // Check if the action is a new member joining
+                for (const participant of participants) {
+                    await sendWelcomeMessage(conn, id, participant);  // Send welcome message to each new member
+                }
             }
-        }
-    });
+        });
+        listenerRegistered = true;  // Set the flag to true after registering the listener
+    }
 };
 
 // Main command handler
@@ -34,6 +38,8 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
         // Check if the WELCOME feature is enabled
         if (config.WELCOME === 'true') {
             
+            // If the user is the owner, do nothing
+            if (isOwner) return;
 
             // Register the listener for welcoming new group participants
             registerGroupWelcomeListener(conn);
