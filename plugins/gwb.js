@@ -1,5 +1,5 @@
 // Import required modules
-const fs = require('fs');
+const fs = require('fs'); // Only import fs if you are absolutely sure you will not use it for file operations
 const path = require('path');
 const { readEnv } = require('../lib/database');   // Reads environment configuration
 const { cmd, commands } = require('../command');  // Handles command functionality
@@ -45,12 +45,11 @@ const registerGroupWelcomeListener = (conn) => {
 // Main command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     try {
-        // Read the environment configuration
+        // Read the environment configuration without saving anything
         const config = await readEnv();
         
         // Check if the WELCOME feature is enabled
         if (config.WELCOME === 'true') {
-            
             // If the user is the owner, do nothing
             if (isOwner) return;
 
