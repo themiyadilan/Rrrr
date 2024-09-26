@@ -1,1 +1,75 @@
-const { cmd } = require('../command'); const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs'); const schedule = require('node-schedule'); const moment = require('moment-timezone'); const fs = require('fs'); const TIMEZONE = 'Asia/Colombo'; const dbFilePath = './data/goctimes.json'; function adjustTime(time) { const [hour, minute] = time.split(':').map(Number); return moment.tz({ hour, minute }, TIMEZONE).subtract(5, 'hours').subtract(30, 'minutes').format('HH:mm'); } const readGroupTimes = () => { if (!fs.existsSync(dbFilePath)) { fs.writeFileSync(dbFilePath, JSON.stringify({})); } return JSON.parse(fs.readFileSync(dbFilePath)); }; const saveGroupTimes = (data) => { fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2)); }; cmd({ pattern: "opentime", desc: "Set daily open time for the group or reset", category: "group", filename: __filename }, async (conn, mek, m, { from, args, isGroup, isBotAdmins, isAdmins, reply }) => { if (!isGroup) return reply('This command can only be used in a group. 🚫'); if (!isBotAdmins) return reply('Bot must be an admin to use this command. 🤖'); if (!isAdmins) return reply('Only admins can use this command. 👮‍♂️'); if (args[0] === 'reset') { const groupTimes = readGroupTimes(); if (!groupTimes[from]?.openTimes) return reply('*𝗡𝗼 𝗢𝗽𝗲𝗻 𝗧𝗶𝗺𝗲 𝗳𝗼𝗿 𝘁𝗵𝗶𝘀 𝗴𝗿𝗼𝘂𝗽 𝗳𝗼𝘂𝗻𝗱. ❌*'); delete groupTimes[from].openTimes; saveGroupTimes(groupTimes); return reply('*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻 𝗧𝗶𝗺𝗲 𝗥𝗲𝘀𝗲𝘁𝘁𝗲𝗱. 🔄*'); } if (args.length < 1) return reply('𝗚𝗿𝗼𝘂𝗽 𝗔𝘂𝘁𝗼 𝗢𝗽𝗲𝗻 🔓\n\n𝚂𝚎𝚝 𝚐𝚛𝚘𝚞𝚙 𝚘𝚙𝚎𝚗 𝚝𝚒𝚖𝚎\n     .opentime HH:MM,HH:MM...\n𝚁𝚎𝚜𝚎𝚝 𝚐𝚛𝚘𝚞𝚘 𝚘𝚙𝚎𝚗 𝚝𝚒𝚖𝚎\n     .opentime reset\n𝙶𝚛𝚘𝚞𝚙 𝚃𝚒𝚖𝚎 𝚍𝚎𝚝𝚊𝚒𝚕𝚜\n     .grouptimelist\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ'); const openTimes = args[0].split(','); openTimes.forEach((openTime) => { const adjustedOpenTime = adjustTime(openTime); const [adjustedHour, adjustedMinute] = adjustedOpenTime.split(':').map(Number); const openCron = `0 ${adjustedMinute} ${adjustedHour} * * *`; schedule.cancelJob(`openGroup_${from}_${openTime}`); schedule.scheduleJob(`openGroup_${from}_${openTime}`, openCron, async () => { await conn.groupSettingUpdate(from, 'not_announcement'); await conn.sendMessage(from, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻𝗲𝗱 𝗮𝘁 ${openTime}. 🔓*\n${sensitiveData.footerText}` }); }); }); const groupTimes = readGroupTimes(); groupTimes[from] = { openTimes: args[0], ...groupTimes[from] }; saveGroupTimes(groupTimes); reply(`*𝗚𝗿𝗼𝘂𝗽 𝗪𝗶𝗹𝗹 𝗢𝗽𝗲𝗻 𝗗𝗮𝗶𝗹𝘆 𝗮𝘁 ${args[0]}. ⏰*`); }); cmd({ pattern: "closetime", desc: "Set daily close time for the group or reset", category: "group", filename: __filename }, async (conn, mek, m, { from, args, isGroup, isBotAdmins, isAdmins, reply }) => { if (!isGroup) return reply('This command can only be used in a group. 🚫'); if (!isBotAdmins) return reply('Bot must be an admin to use this command. 🤖'); if (!isAdmins) return reply('Only admins can use this command. 👮‍♂️'); if (args[0] === 'reset') { const groupTimes = readGroupTimes(); if (!groupTimes[from]?.closeTimes) return reply('*𝗡𝗼 𝗖𝗹𝗼𝘀𝗲 𝗧𝗶𝗺𝗲 𝗳𝗼𝗿 𝘁𝗵𝗶𝘀 𝗴𝗿𝗼𝘂𝗽 𝗳𝗼𝘂𝗻𝗱. ❌*'); delete groupTimes[from].closeTimes; saveGroupTimes(groupTimes); return reply('*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲 𝗧𝗶𝗺𝗲 𝗥𝗲𝘀𝗲𝘁𝘁𝗲𝗱. 🔄*'); } if (args.length < 1) return reply('𝗚𝗿𝗼𝘂𝗽 𝗔𝘂𝘁𝗼 𝗖𝗹𝗼𝘀𝗲 🔒\n\n𝚂𝚎𝚝 𝚆𝚘𝚞𝚜𝚙𝚊𝚕𝚎 𝚌𝚕𝚘𝚜𝚎 𝚝𝚒𝚖𝚎\n     .closetime HH:MM,HH:MM...\n𝚁𝚎𝚜𝚎𝚝 𝚐𝚛𝚘𝚞𝚙 𝚌𝚕𝚘𝚜𝚎 𝚝𝚒𝚖𝚎\n     .closetime reset\n𝙶𝚛𝚘𝚞𝚙 𝚃𝚒𝚖𝚎 𝚍𝚎𝚝𝚊𝚒𝚕\n     .grouptimelist\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ'); const closeTimes = args[0].split(','); closeTimes.forEach((closeTime) => { const adjustedCloseTime = adjustTime(closeTime); const [adjustedHour, adjustedMinute] = adjustedCloseTime.split(':').map(Number); const closeCron = `0 ${adjustedMinute} ${adjustedHour} * * *`; schedule.cancelJob(`closeGroup_${from}_${closeTime}`); schedule.scheduleJob(`closeGroup_${from}_${closeTime}`, closeCron, async () => { await conn.groupSettingUpdate(from, 'announcement'); await conn.sendMessage(from, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\n${sensitiveData.footerText}` }); }); }); const groupTimes = readGroupTimes(); groupTimes[from] = { closeTimes: args[0], ...groupTimes[from] }; saveGroupTimes(groupTimes); reply(`*𝗚𝗿𝗼𝘂𝗽 𝗪𝗶𝗹𝗹 𝗖𝗹𝗼𝘀𝗲 𝗗𝗮𝗶𝗹𝘆 𝗮𝘁 ${args[0]}. ⏰*`); }); cmd({ pattern: "grouptimelist", desc: "List group open and close times", category: "group", filename: __filename }, async (conn, mek, m, { from, isGroup, reply }) => { if (!isGroup) return reply('This command can only be used in a group. 🚫'); const groupTimes = readGroupTimes(); if (!groupTimes[from]) return reply('*𝗡𝗼 𝗧𝗶𝗺𝗲 𝗗𝗲𝘁𝗮𝗶𝗹𝘀 𝗳𝗼𝗿 𝘁𝗵𝗶𝘀 𝗴𝗿𝗼𝘂𝗽 𝗳𝗼𝘂𝗻𝗱. ❌*');  const { openTimes, closeTimes } = groupTimes[from];  let response = '*𝗚𝗿𝗼𝘂𝗽 𝗧𝗶𝗺𝗲 𝗗𝗲𝘁𝗮𝗶𝗹𝘀:*\n';  if (openTimes) { response += `*𝗢𝗽𝗲𝗻 𝗧𝗶𝗺𝗲𝘀:* ${openTimes}\n`;  } else {   response += '*𝗡𝗼 𝗢𝗽𝗲𝗻 𝗧𝗶𝗺𝗲 𝗳𝗼𝗿 𝘁𝗵𝗶𝘀 𝗴𝗿𝗼𝘂𝗽. ❌*\n'; }  if (closeTimes) {   response += `*𝗖𝗹𝗼𝘀𝗲 𝗧𝗶𝗺𝗲𝘀:* ${closeTimes}\n`;  } else {  response += '*𝗡𝗼 𝗖𝗹𝗼𝘀𝗲 𝗧𝗶𝗺𝗲 𝗳𝗼𝗿 𝘁𝗵𝗶𝘀 𝗴𝗿𝗼𝘂𝗽. ❌*';  } reply(response);});process.on('exit', () => {  const groupTimes = readGroupTimes(); for (const groupId in groupTimes) { const { openTimes, closeTimes } = groupTimes[groupId]; if (openTimes) {  openTimes.split(',').forEach((openTime) => {   schedule.cancelJob(`openGroup_${groupId}_${openTime}`);  });   }   if (closeTimes) {  closeTimes.split(',').forEach((closeTime) => {   schedule.cancelJob(`closeGroup_${groupId}_${closeTime}`); });} }});
+const schedule = require('node-schedule');
+const moment = require('moment-timezone');
+const { readEnv } = require('../lib/database');
+
+// Set timezone for calculations
+const TIMEZONE = 'Asia/Colombo';
+
+// Function to adjust the time by subtracting 5 hours and 30 minutes
+function adjustTime(time) {
+    const [hour, minute] = time.split(':').map(Number);
+    return moment.tz({ hour, minute }, TIMEZONE).subtract(5, 'hours').subtract(30, 'minutes').format('HH:mm');
+}
+
+// Function to schedule open and close times for a group
+function scheduleGroupTimes(conn, groupId, openTimes, closeTimes) {
+    openTimes.forEach((openTime) => {
+        const adjustedOpenTime = adjustTime(openTime);
+        const [adjustedHour, adjustedMinute] = adjustedOpenTime.split(':').map(Number);
+        const openCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+
+        schedule.scheduleJob(`${groupId}_openGroup_${openTime}`, openCron, async () => {
+            await conn.groupSettingUpdate(groupId, 'not_announcement');  // Open the group
+            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻𝗲𝗱 𝗮𝘁 ${openTime}. 🔓*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
+        });
+    });
+
+    closeTimes.forEach((closeTime) => {
+        const adjustedCloseTime = adjustTime(closeTime);
+        const [adjustedHour, adjustedMinute] = adjustedCloseTime.split(':').map(Number);
+        const closeCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+
+        schedule.scheduleJob(`${groupId}_closeGroup_${closeTime}`, closeCron, async () => {
+            await conn.groupSettingUpdate(groupId, 'announcement');  // Close the group
+            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
+        });
+    });
+}
+
+// Function to parse and schedule group times
+async function setupGroupSchedules(conn) {
+    const config = await readEnv();
+    const groupTimes = config.GROUPS_TIMES;
+
+    // Parse GROUPS_TIMES config
+    const groups = groupTimes.split('/').map(entry => {
+        const parts = entry.match(/(.*?)/g).map(part => part.replace(/[()]/g, ''));
+        return {
+            groupId: parts[0],   // Extract group ID
+            openTimes: parts[1].split(','),  // Extract open times
+            closeTimes: parts[2].split(',')  // Extract close times
+        };
+    });
+
+    // Schedule open and close times for each group
+    groups.forEach(({ groupId, openTimes, closeTimes }) => {
+        scheduleGroupTimes(conn, groupId, openTimes, closeTimes);
+    });
+}
+
+// Execute the group schedule setup
+cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
+    try {
+        // Only allow the owner to trigger the scheduling setup
+        if (!isOwner) return;
+
+        // Set up schedules for groups
+        await setupGroupSchedules(conn);
+
+        // Confirmation message
+        await conn.sendMessage(from, { text: 'Group schedules have been set up successfully!' });
+    } catch (error) {
+        console.error('Error setting up group schedules:', error);
+        await conn.sendMessage(from, { text: `Error: ${error.message}` });
+    }
+});
