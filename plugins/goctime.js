@@ -18,24 +18,32 @@ function scheduleGroupTimes(conn, groupId, openTimes, closeTimes) {
         const adjustedOpenTime = adjustTime(openTime);
         const [adjustedHour, adjustedMinute] = adjustedOpenTime.split(':').map(Number);
         const openCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+        const jobName = `${groupId}_openGroup_${openTime}`;
 
-        // Schedule opening the group
-        schedule.scheduleJob(`${groupId}_openGroup_${openTime}`, openCron, async () => {
-            await conn.groupSettingUpdate(groupId, 'not_announcement');  // Open the group
-            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻𝗲𝗱 𝗮𝘁 ${openTime}. 🔓*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
-        });
+        // Check if the job already exists
+        if (!schedule.scheduledJobs[jobName]) {
+            // Schedule opening the group
+            schedule.scheduleJob(jobName, openCron, async () => {
+                await conn.groupSettingUpdate(groupId, 'not_announcement');  // Open the group
+                await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗢𝗽𝗲𝗻𝗲𝗱 𝗮𝘁 ${openTime}. 🔓*\nᴍʀ ᴅɪʟᴀ ᴏꜟᴄ` });
+            });
+        }
     });
 
     closeTimes.forEach((closeTime) => {
         const adjustedCloseTime = adjustTime(closeTime);
         const [adjustedHour, adjustedMinute] = adjustedCloseTime.split(':').map(Number);
         const closeCron = `0 ${adjustedMinute} ${adjustedHour} * * *`;
+        const jobName = `${groupId}_closeGroup_${closeTime}`;
 
-        // Schedule closing the group
-        schedule.scheduleJob(`${groupId}_closeGroup_${closeTime}`, closeCron, async () => {
-            await conn.groupSettingUpdate(groupId, 'announcement');  // Close the group
-            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʿ ᴅɪʟᴀ ᴏꜰᴄ` });
-        });
+        // Check if the job already exists
+        if (!schedule.scheduledJobs[jobName]) {
+            // Schedule closing the group
+            schedule.scheduleJob(jobName, closeCron, async () => {
+                await conn.groupSettingUpdate(groupId, 'announcement');  // Close the group
+                await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʿ ᴅɪʟᴀ ᴏꜟᴄ` });
+            });
+        }
     });
 }
 
