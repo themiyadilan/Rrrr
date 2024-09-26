@@ -50,7 +50,7 @@ const sendGroupRulesAlert = async (conn, memberIds, groupName, groupDesc) => {
         // Only send the alert if WELCOME_ALERT is true
         if (config.WELCOME_ALERT === 'true') {
             // Prepare the alert message for new members
-            const alertMessage = `*Hey Dear 🫂❤️*\n(major new member)\n\n*Welcome to ${groupName}*\n\n${groupDesc}\n\n*Be sure to read the group description*\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜟᴄ`;
+            const alertMessage = `*Hey Dear 🫂❤️*\n\n*Welcome to ${groupName}*\n\n${groupDesc}\n\n*Be sure to read the group description*\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜟᴄ`;
 
             // Send the alert to each new member in private
             for (const memberId of memberIds) {
