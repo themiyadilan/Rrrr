@@ -34,7 +34,7 @@ function scheduleGroupTimes(conn, groupId, openTimes, closeTimes) {
         // Schedule closing the group
         schedule.scheduleJob(`${groupId}_closeGroup_${closeTime}`, closeCron, async () => {
             await conn.groupSettingUpdate(groupId, 'announcement');  // Close the group
-            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʀ ᴅɪʟᴀ ᴏꜰᴄ` });
+            await conn.sendMessage(groupId, { text: `*𝗚𝗿𝗼𝘂𝗽 𝗖𝗹𝗼𝘀𝗲𝗱 𝗮𝘁 ${closeTime}. 🔒*\nᴍʿ ᴅɪʟᴀ ᴏꜰᴄ` });
         });
     });
 }
@@ -77,8 +77,7 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
         // Set up schedules for groups
         await setupGroupSchedules(conn);
 
-        // Confirmation message
-        await conn.sendMessage(from, { text: 'Group schedules have been set up successfully!' });
+        // The confirmation message has been removed
     } catch (error) {
         console.error('Error setting up group schedules:', error);
         await conn.sendMessage(from, { text: `Error: ${error.message}` });
