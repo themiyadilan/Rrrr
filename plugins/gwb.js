@@ -1,5 +1,5 @@
 // Import required modules
-const fs = require('fs'); // Only import fs if you are absolutely sure you will not use it for file operations
+const fs = require('fs');
 const path = require('path');
 const { readEnv } = require('../lib/database');   // Reads environment configuration
 const { cmd, commands } = require('../command');  // Handles command functionality
@@ -8,16 +8,19 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
-
-
 // Function to send a welcome message to new members with "read more" functionality
 const sendWelcomeMessage = async (conn, from, memberIds) => {
     try {
         const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
         const groupName = groupMetadata.subject;  // Get the group name
         const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
-        const config=await readEnv();
-      
+        const config = await readEnv();
+
+        // Ensure WELCOME_SET is defined
+        if (!config.WELCOME_SET) {
+            throw new Error("WELCOME_SET is not defined in the environment variables.");
+        }
+
         // Create a 'read more' effect using a large number of zero-width spaces
         let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
 
@@ -47,8 +50,12 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
 // Function to send group rules alert to new members in a private message
 const sendGroupRulesAlert = async (conn, memberIds, groupName, groupDesc) => {
     try {
-        // Read the environment configuration to check if WELCOME_ALERT is enabled
         const config = await readEnv();
+
+        // Ensure WELCOME_ALERT is defined
+        if (config.WELCOME_ALERT === undefined) {
+            throw new Error("WELCOME_ALERT is not defined in the environment variables.");
+        }
 
         // Only send the alert if WELCOME_ALERT is true
         if (config.WELCOME_ALERT === 'true') {
@@ -94,7 +101,12 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     try {
         // Read the environment configuration without saving anything
         const config = await readEnv();
-        
+
+        // Ensure WELCOME is defined
+        if (config.WELCOME === undefined) {
+            throw new Error("WELCOME is not defined in the environment variables.");
+        }
+
         // Check if the WELCOME feature is enabled
         if (config.WELCOME === 'true') {
             // If the user is the owner, do nothing
