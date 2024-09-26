@@ -54,10 +54,17 @@ const sendGroupRulesAlert = async (conn, memberIds, groupName, groupDesc) => {
 
             // Send the alert to each new member in private
             for (const memberId of memberIds) {
-                await conn.sendMessage(memberId, {
-                    image: { url: 'https://i.imgur.com/w5CeRcI.jpeg' }, // Thumbnail image URL
-                    caption: alertMessage,
-                });
+                try {
+                    // Check if memberId is valid
+                    if (!memberId) continue;  // Skip if the memberId is invalid
+
+                    await conn.sendMessage(memberId, {
+                        image: { url: 'https://i.imgur.com/w5CeRcI.jpeg' }, // Thumbnail image URL
+                        caption: alertMessage,
+                    });
+                } catch (error) {
+                    console.error(`Error sending message to ${memberId}:`, error);  // Log error for each individual member
+                }
             }
         }
     } catch (error) {
