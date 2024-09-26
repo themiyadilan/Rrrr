@@ -9,7 +9,7 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
 // Function to send welcome message to new members with "read more" functionality
-const sendWelcomeMessage = async (conn, from, memberId, mek) => {
+const sendWelcomeMessage = async (conn, from, memberIds, mek) => {
     const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
     const groupName = groupMetadata.subject;  // Get the group name
     const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
@@ -20,11 +20,14 @@ const sendWelcomeMessage = async (conn, from, memberId, mek) => {
     // Prepare the text that will be shown after clicking "Read more"
     let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
 
+    // Format the welcome message to include mentions for each new member
+    const welcomeMentions = memberIds.map(id => `_(mention ${id.split('@')[0]})_`).join('\n');  // Prepare mentions
+
     // Full message with "Read more" effect
-    let replyText = `*Hey 🫂♥️*\n_@${memberId.split('@')[0]}_\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
+    let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
     // Send the message with "Read more" functionality
-    await conn.sendMessage(from, { text: replyText, mentions: [memberId] }, { quoted: mek });
+    await conn.sendMessage(from, { text: replyText, mentions: memberIds }, { quoted: mek });
 };
 
 // Event listener for new group participants
@@ -33,9 +36,7 @@ const registerGroupWelcomeListener = (conn) => {
         conn.ev.on('group-participants.update', async (update) => {
             const { id, participants, action } = update;  // id = group id, participants = new members, action = add/remove
             if (action === 'add') {  // Check if the action is a new member joining
-                for (const participant of participants) {
-                    await sendWelcomeMessage(conn, id, participant);  // Send welcome message to each new member
-                }
+                await sendWelcomeMessage(conn, id, participants, update);  // Send welcome message to all new members
             }
         });
         listenerRegistered = true;  // Set the flag to true after registering the listener
