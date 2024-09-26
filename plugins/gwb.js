@@ -8,26 +8,30 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
-// Function to send welcome message to new members with "read more" functionality
+// Function to send a welcome message to new members with "read more" functionality
 const sendWelcomeMessage = async (conn, from, memberIds, mek) => {
-    const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
-    const groupName = groupMetadata.subject;  // Get the group name
-    const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
+    try {
+        const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
+        const groupName = groupMetadata.subject;  // Get the group name
+        const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
 
-    // Create a 'read more' effect using a large number of zero-width spaces
-    let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
+        // Create a 'read more' effect using a large number of zero-width spaces
+        let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
 
-    // Prepare the text that will be shown after clicking "Read more"
-    let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
+        // Prepare the text that will be shown after clicking "Read more"
+        let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
 
-    // Format the welcome message to include mentions for each new member
-    const welcomeMentions = memberIds.map(id => `@${id.split('@')[0]}`).join('\n');  // Prepare mentions
+        // Format the welcome message to include mentions for each new member
+        const welcomeMentions = memberIds.map(id => `@${id.split('@')[0]}`).join('\n');  // Prepare mentions
 
-    // Full message with "Read more" effect
-    let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
+        // Full message with "Read more" effect
+        let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
-    // Send the message with "Read more" functionality
-    await conn.sendMessage(from, { text: replyText, mentions: memberIds }, { quoted: mek });
+        // Send the message with "Read more" functionality
+        await conn.sendMessage(from, { text: replyText, mentions: memberIds }, { quoted: mek });
+    } catch (error) {
+        console.error("Error sending welcome message:", error);  // Log the error for debugging
+    }
 };
 
 // Event listener for new group participants
@@ -35,7 +39,8 @@ const registerGroupWelcomeListener = (conn) => {
     if (!listenerRegistered) {  // Check if the listener is already registered
         conn.ev.on('group-participants.update', async (update) => {
             const { id, participants, action } = update;  // id = group id, participants = new members, action = add/remove
-            if (action === 'add') {  // Check if the action is a new member joining
+            if (action === 'add' && participants.length > 0) {  // Check if the action is a new member joining
+                console.log("New participants:", participants);  // Log new participants
                 await sendWelcomeMessage(conn, id, participants, update);  // Send welcome message to all new members
             }
         });
