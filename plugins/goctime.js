@@ -1,6 +1,7 @@
 const schedule = require('node-schedule');
 const moment = require('moment-timezone');
 const { readEnv } = require('../lib/database');
+const { cmd } = require('../command'); // Make sure this import is correct
 
 // Set timezone for calculations
 const TIMEZONE = 'Asia/Colombo';
