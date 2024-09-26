@@ -8,18 +8,21 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
+
+
 // Function to send a welcome message to new members with "read more" functionality
 const sendWelcomeMessage = async (conn, from, memberIds) => {
     try {
         const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
         const groupName = groupMetadata.subject;  // Get the group name
         const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
-
+        const config=await readEnv();
+      
         // Create a 'read more' effect using a large number of zero-width spaces
         let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
 
         // Prepare the text that will be shown after clicking "Read more"
-        let readmoreText = `\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜟᴄ`;
+        let readmoreText = `\n${config.WELCOME_SET}\n\n*Name :*\n${groupName}\n\n*Description :*\n${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜟᴄ`;
 
         // Format the welcome message to include mentions for each new member
         const welcomeMentions = memberIds.map(id => `@${id.split('@')[0]}`).join('\n');  // Prepare mentions
