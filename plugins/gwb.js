@@ -8,19 +8,23 @@ const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');  // Ensure
 
 let listenerRegistered = false; // Flag to ensure the listener is registered only once
 
-// Function to send welcome message to new members
-const sendWelcomeMessage = async (conn, groupId, memberId) => {
-    const groupMetadata = await conn.groupMetadata(groupId);  // Get group metadata
+// Function to send welcome message to new members with "read more" functionality
+const sendWelcomeMessage = async (conn, from, memberId, mek) => {
+    const groupMetadata = await conn.groupMetadata(from);  // Get group metadata
     const groupName = groupMetadata.subject;  // Get the group name
     const groupDesc = groupMetadata.desc || "No description available.";  // Get group description or default text
 
-    const welcomeMessage = `*Hey 🫂♥️ @${memberId.split('@')[0]}* \n` +
-        `*Welcome to Group ⤵️*\n\n` +
-        `*Name :*\n${groupName}\n\n` +
-        `*Description :*\n${groupDesc}\n\n` +
-        `${sensitiveData.footerText || 'ᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ'}`;
-        
-    await conn.sendMessage(groupId, { text: welcomeMessage, mentions: [memberId] });
+    // Create a 'read more' effect using a large number of zero-width spaces
+    let readmore = "\u200B".repeat(4000);  // Invisible characters to trigger "Read more"
+
+    // Prepare the text that will be shown after clicking "Read more"
+    let readmoreText = `\n\n*Name :* ${groupName}\n\n*Description :* ${groupDesc}\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
+
+    // Full message with "Read more" effect
+    let replyText = `*Hey 🫂♥️ @${memberId.split('@')[0]}*\nWelcome to Group ⤵️${readmore}${readmoreText}`;
+
+    // Send the message with "Read more" functionality
+    await conn.sendMessage(from, { text: replyText, mentions: [memberId] }, { quoted: mek });
 };
 
 // Event listener for new group participants
