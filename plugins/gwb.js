@@ -24,11 +24,23 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
         // Format the welcome message to include mentions for each new member
         const welcomeMentions = memberIds.map(id => `@${id.split('@')[0]}`).join('\n');  // Prepare mentions
 
+        // Determine the image to send based on the number of new members
+        let imageUrl;
+        if (memberIds.length > 1) {
+            // If multiple new members, use the group profile photo
+            imageUrl = groupMetadata.groupProfilePicture;  // Assume group profile picture URL is accessible
+        } else {
+            // If one new member, use their profile photo
+            const memberId = memberIds[0];
+            const participant = await conn.getContact(memberId);  // Get participant info to fetch their profile picture
+            imageUrl = participant.profilePictureUrl || groupMetadata.groupProfilePicture;  // Use their profile picture if available, else fallback to group photo
+        }
+
         // Full message with "Read more" effect
         let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
-        // Send the message with "Read more" functionality
-        await conn.sendMessage(from, { text: replyText, mentions: memberIds });
+        // Send the message with "Read more" functionality and the appropriate image
+        await conn.sendMessage(from, { text: replyText, mentions: memberIds, caption: imageUrl });
     } catch (error) {
         console.error("Error sending welcome message:", error);  // Log the error for debugging
     }
