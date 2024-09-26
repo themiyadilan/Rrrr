@@ -27,11 +27,11 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
         // Full message with "Read more" effect
         let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
 
-        // Send the message with the thumbnail image
-        await conn.sendMessage(from, { 
-            text: replyText, 
-            mentions: memberIds,
-            thumbnail: { url: 'https://i.imgur.com/w5CeRcI.jpeg' } // Add the thumbnail image
+        // Send the thumbnail image first
+        await conn.sendMessage(from, {
+            image: { url: 'https://i.imgur.com/w5CeRcI.jpeg' }, // Thumbnail image URL
+            caption: replyText,
+            mentions: memberIds // Mentions for new members
         });
     } catch (error) {
         console.error("Error sending welcome message:", error);  // Log the error for debugging
