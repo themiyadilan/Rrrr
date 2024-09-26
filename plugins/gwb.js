@@ -1,4 +1,8 @@
-const { cmd } = require('../command');
+const fs = require('fs');
+const path = require('path');
+const { readEnv } = require('../lib/database');   // Reads environment configuration
+const { cmd, commands } = require('../command');  // Handles command functionality
+const { fetchJson } = require('../lib/functions'); // Fetches JSON data from a URL
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
 
 // Function to send welcome message to new members
@@ -19,20 +23,22 @@ const registerGroupWelcomeListener = (conn) => {
     });
 };
 
-// Example of registering the event listener in your main file
-cmd({ pattern: "welcome", react: "👋", desc: "Send a welcome message when a new member joins the group", category: "group", use: '.greet', filename: __filename }, 
-async (conn, mek, m, { from, isGroup, isBotAdmins, isAdmins, reply }) => {
+cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     try {
-        if (!isGroup) return reply('This command can only be used in a group. 🚫');
-        if (!isBotAdmins) return reply('Bot must be an admin to use this command. 🤖');
-        if (!isAdmins) return reply('Only admins can use this command. 👮‍♂️');
+        // Read the environment configuration
+        const config = await readEnv();
+        
+        // Check if the AUTO_AI feature is enabled
+        if (config.WELCOM === 'true') {
+            
+            // If the user is the owner, do nothing
+            if (isOwner) return;
 
-        // Register the event listener for new participants
-        registerGroupWelcomeListener(conn);
-
-        reply('Welcome message functionality activated! 🥳');
+            registerGroupWelcomeListener(conn);
+        }
     } catch (e) {
-        reply('Error setting up welcome messages. ⚠️');
+        // Log the error and send an error message to the user
         console.log(e);
+        await m.reply(`Error: ${e.message}`);
     }
 });
