@@ -33,8 +33,35 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
             caption: replyText,
             mentions: memberIds // Mentions for new members
         });
+
+        // Send group rules alert to new members if WELCOME_ALERT is enabled
+        await sendGroupRulesAlert(conn, memberIds, groupName, groupDesc);
     } catch (error) {
         console.error("Error sending welcome message:", error);  // Log the error for debugging
+    }
+};
+
+// Function to send group rules alert to new members in a private message
+const sendGroupRulesAlert = async (conn, memberIds, groupName, groupDesc) => {
+    try {
+        // Read the environment configuration to check if WELCOME_ALERT is enabled
+        const config = await readEnv();
+
+        // Only send the alert if WELCOME_ALERT is true
+        if (config.WELCOME_ALERT === 'true') {
+            // Prepare the alert message for new members
+            const alertMessage = `*Hey Dear 🫂❤️*\n(major new member)\n\n*Welcome to ${groupName}*\n\n${groupDesc}\n\n*Be sure to read the group description*\n\nᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜟᴄ`;
+
+            // Send the alert to each new member in private
+            for (const memberId of memberIds) {
+                await conn.sendMessage(memberId, {
+                    image: { url: 'https://i.imgur.com/w5CeRcI.jpeg' }, // Thumbnail image URL
+                    caption: alertMessage,
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error sending group rules alert:", error);  // Log the error for debugging
     }
 };
 
