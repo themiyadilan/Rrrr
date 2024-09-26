@@ -29,7 +29,7 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
         const config = await readEnv();
         
         // Check if the AUTO_AI feature is enabled
-        if (config.WELCOM === 'true') {
+        if (config.WELCOME === 'true') {
             
             // If the user is the owner, do nothing
             if (isOwner) return;
