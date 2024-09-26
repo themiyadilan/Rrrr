@@ -121,3 +121,30 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
         await m.reply(`Error: ${e.message}`);
     }
 });
+
+// Add a new command handler for the "welcomestates" command
+cmd({ on: "welcomestates" }, async (conn, mek, m) => {
+    try {
+        // Read the environment configuration
+        const config = await readEnv();
+
+        // Ensure WELCOME_SET, WELCOME, and WELCOME_ALERT are defined
+        if (config.WELCOME_SET === undefined || config.WELCOME === undefined || config.WELCOME_ALERT === undefined) {
+            throw new Error("One or more welcome environment variables are not defined.");
+        }
+
+        // Prepare the welcome states reply message
+        const replyText = `*BOT WELCOME STATES ✅*\n\n` +
+            `*Custom Welcome MSG :*\n${config.WELCOME_SET})\n\n` +
+            `*Welcome Value :*\n${config.WELCOME})\n\n` +
+            `*Welcome Alert Value :*\n${config.WELCOME_ALERT})\n\n` +
+            `ᴍᴀᴅᴇ ʙʏ ᴍʀ ᴅɪʟᴀ ᴏꜰᴄ`;
+
+        // Reply with the welcome states
+        await m.reply(replyText);
+    } catch (error) {
+        // Log and send an error message if something goes wrong
+        console.error("Error fetching welcome states:", error);
+        await m.reply(`Error: ${error.message}`);
+    }
+});
