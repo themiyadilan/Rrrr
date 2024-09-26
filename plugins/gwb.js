@@ -31,7 +31,8 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
             }
         } catch (error) {
             console.log("Error fetching profile picture, using default.");
-            imageUrl = 'default_image_url'; // Add a default image URL here
+            // Use a valid default image URL or local path
+            imageUrl = 'https://telegra.ph/file/94055e3a7e18f50199374.jpg'; // Replace with your valid image URL or path
         }
 
         let replyText = `*Hey 🫂♥️*\n${welcomeMentions}\n*Welcome to Group ⤵️*\n${readmore}${readmoreText}`;
