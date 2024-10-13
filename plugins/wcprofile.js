@@ -33,7 +33,7 @@ const { fetchJson } = require('../lib/functions');
         // Modified command for 'link'
         if (body.toLowerCase() === 'link') {
             const ownerNumber = config.OWNER_NUMBER.replace('@s.whatsapp.net', ''); // Remove @s.whatsapp.net
-            const linkReply = `*Name :* ${config.WCPROFILENAME}\n*From :* ${config.WCPROFILEFROM}\n*Age :* ${config.WCPROFILEAGE}\n\n*Link :* https://wa.me/+${ownerNumber}?text=${config.WCPROFILEMSG}`;
+            const linkReply = `*Name : ${config.WCPROFILENAME}*\n*From : ${config.WCPROFILEFROM}*\n*Age : ${config.WCPROFILEAGE}*\n\n*Link : https://wa.me/+${ownerNumber}?text=${config.WCPROFILEMSG}*`;
             await conn.sendMessage(from, { text: linkReply }, { quoted: null });
         }
 
