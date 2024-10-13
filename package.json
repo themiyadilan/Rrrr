@@ -9,8 +9,6 @@
     "restart": "pm2 restart dilamd"
   },
   "dependencies": {
-    "heroku/nodejs-engine":"2.6.2",
-    "koyeb/build-command-nodejs":"0.1.0",
     "@whiskeysockets/baileys": "6.6.0",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@adiwajshing/baileys":"5.0.0",
