@@ -3,7 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions');
-const emoji = require('node-emoji'); // You might need to install this package if you haven't already
+const emoji = require('node-emoji'); // This library is still used for random emoji selection
 
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     try {
@@ -11,17 +11,15 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
         
         // Check if auto-react is enabled in the config
         if (config.AUTO_REACT === 'true') {
-            let emojis = emoji.emojis; // Get the list of emojis
 
-            // Function to extract emojis from a string
-            const extractEmojis = (str) => {
-                return [...str].filter(char => emoji.hasEmoji(char));
-            };
-
-            let incomingEmojis = extractEmojis(body);
+            // Regular expression to detect emojis in the message
+            const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/gu;
+            
+            // Extract emojis from the body using regex
+            const incomingEmojis = body.match(emojiRegex);
 
             // If there are emojis in the incoming message, reattach them
-            if (incomingEmojis.length > 0) {
+            if (incomingEmojis && incomingEmojis.length > 0) {
                 await m.react(incomingEmojis[0]); // React with the first emoji found
             } else {
                 // If no emojis are found, react with a random emoji
