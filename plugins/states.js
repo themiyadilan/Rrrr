@@ -29,10 +29,12 @@ async function initializeStatusListener(conn) {
     // Listen for new messages, including status updates and replies
     conn.ev.on('messages.upsert', async (mek) => {
         try {
-            if (!mek || !mek.messages || mek.messages.length === 0) return; // Ensure mek and messages exist
-
+            // Ensure mek and messages are defined and contain valid data
+            if (!mek || !mek.messages || mek.messages.length === 0) return;
+            
             mek = mek.messages[0]; // Get the first message from the array
-            if (!mek || !mek.message) return; // Check if the message exists and is valid
+
+            if (!mek.key || !mek.message) return; // Ensure mek has a key and message
 
             // Handle ephemeral messages
             mek.message = (getContentType(mek.message) === 'ephemeralMessage')
@@ -40,48 +42,57 @@ async function initializeStatusListener(conn) {
                 : mek.message;
 
             // Check if the message is a status update
-            if (mek.key && mek.key.remoteJid === 'status@broadcast') {
+            if (mek.key.remoteJid === 'status@broadcast') {
                 const sender = mek.key.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
-                console.log(`New status posted by: ${sender}`);
+                console.log(`📢 New status update detected!`);
+                console.log(`📝 Status posted by: ${sender}`);
+                console.log(`💬 Full message details: ${JSON.stringify(mek, null, 2)}`);
 
                 // Check the config to decide whether to send the status seen message
                 if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
                     const message = `${config.STATES_SEEN_MESSAGE}`;
                     await conn.sendMessage(sender, { text: message });
+                    console.log(`👀 Seen message sent to ${sender}: "${message}"`);
                 }
             }
 
             // Check if someone replied to a status Themiya posted
-            if (mek.key && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
+            if (mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
                 const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
-                const sender = mek.key.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
+                const sender = mek.key.participant || mek.key.remoteJid;
 
                 if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
                     // If someone replies to a status Themiya posted
                     const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
-                    console.log(`Reply received for status posted by Themiya: ${sender}`);
+                    console.log(`🔄 Someone replied to Themiya's status!`);
+                    console.log(`🙋‍♂️ Reply received from: ${sender}`);
+                    console.log(`📜 Original status details: ${JSON.stringify(originalStatus, null, 2)}`);
 
                     // Send the original status as a reply
                     await conn.sendMessage(sender, originalStatus);
+                    console.log(`📩 Sent the original status back to ${sender}`);
                 }
             }
 
             // Check if Themiya replies to another person's status
             if (mek.key.fromMe && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
                 const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
-                const recipient = mek.message.extendedTextMessage.contextInfo.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
+                const recipient = mek.message.extendedTextMessage.contextInfo.participant || mek.key.remoteJid;
 
                 if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
                     // Themiya replied to someone else's status
                     const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
-                    console.log(`Themiya replied to status: Sending status to ${recipient}`);
+                    console.log(`📨 Themiya replied to someone's status!`);
+                    console.log(`💡 Sending status to the original poster: ${recipient}`);
+                    console.log(`📝 Original status details: ${JSON.stringify(originalStatus, null, 2)}`);
 
                     // Send the original status to the person who posted it
                     await conn.sendMessage(recipient, originalStatus);
+                    console.log(`✅ Successfully sent the status to ${recipient}`);
                 }
             }
-        } catch (err) {
-            console.error(`Error processing message: ${err.message}`, err);
+        } catch (error) {
+            console.error(`❌ Error processing message: ${error.message}`, error);
         }
     });
 
