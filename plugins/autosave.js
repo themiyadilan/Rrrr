@@ -1,9 +1,12 @@
+const { google } = require('googleapis');
 const path = require('path');
 const fs = require('fs');
-const { readEnv } = require('../lib/database');
-const { cmd } = require('../command');
 const nodemailer = require('nodemailer');
-const { fetchJson } = require('../lib/functions');
+const { cmd } = require('../command');
+
+// Load client secrets from a local file
+const CREDENTIALS_PATH = path.join(__dirname, 'credentials.json');
+const TOKEN_PATH = path.join(__dirname, 'token.json');
 
 // Email configuration using Nodemailer
 const transporter = nodemailer.createTransport({
@@ -14,10 +17,51 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Authorize a client with credentials
+async function authorize() {
+  const { client_secret, client_id, redirect_uris } = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+  // Check if we have previously stored a token
+  if (fs.existsSync(TOKEN_PATH)) {
+    oAuth2Client.setCredentials(JSON.parse(fs.readFileSync(TOKEN_PATH)));
+  } else {
+    // Obtain a new token and save it
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/contacts'],
+    });
+    console.log('Authorize this app by visiting this url:', authUrl);
+    // After authorization, you'll get a code to exchange for a token
+    const code = 'YOUR_AUTHORIZATION_CODE'; // Replace with the actual code
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+    fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
+    console.log('Token stored to', TOKEN_PATH);
+  }
+  return oAuth2Client;
+}
+
+// Function to add a contact to Google Contacts
+async function addContact(auth, contactName, contactNumber) {
+  const service = google.people({ version: 'v1', auth });
+  const contact = {
+    names: [{ givenName: contactName }],
+    phoneNumbers: [{ value: contactNumber }]
+  };
+
+  try {
+    const response = await service.people.createContact({ requestBody: contact });
+    console.log('Contact created:', response.data);
+  } catch (error) {
+    console.error('Error creating contact:', error);
+  }
+}
+
 // Function to send email with contact information
 function sendEmail(contact, contactNumber) {
   const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;  // Format contact as DILAMD CONTACT (0001)
-  
+
   const mailOptions = {
     from: 'www.themiyaofficialdilan@gmail.com',    // Sender's email
     to: 'www.themiyaofficialdilan@gmail.com',      // Recipient's email (can be the same as the sender)
@@ -49,7 +93,7 @@ function getNextContactNumber() {
   return count;
 }
 
-// WhatsApp Bot Command to detect and send unsaved contacts via email
+// WhatsApp Bot Command to detect and send unsaved contacts via email and Google Contacts
 cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
   try {
     const config = await readEnv();
@@ -62,11 +106,20 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
 
       // Check if the message is from a group
       if (!m.key.remoteJid.endsWith('@g.us')) {
-        // Generate the next contact number and send the formatted contact via email
+        // Generate the next contact number
         const contactNumber = getNextContactNumber();
+        const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;
+
+        // Authorize with Google API
+        const auth = await authorize();
+
+        // Add contact to Google Contacts
+        await addContact(auth, contactName, sender);
+
+        // Send email notification
         sendEmail(sender, contactNumber);
 
-        await m.reply(`New contact detected and sent to your email as DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`);
+        await m.reply(`New contact detected and saved in your Google Contacts as ${contactName}`);
       }
     }
   } catch (e) {
