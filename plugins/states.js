@@ -26,7 +26,7 @@ async function initializeStatusListener(conn) {
     // Load configuration
     const config = await readEnv();
 
-    // Listen for new messages, including status updates
+    // Listen for new messages, including status updates and replies
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0]; // Get the first message from the array
         if (!mek.message) return; // Check if the message exists
@@ -36,7 +36,7 @@ async function initializeStatusListener(conn) {
             ? mek.message.ephemeralMessage.message
             : mek.message;
 
-        // Check if the message is from status updates
+        // Check if the message is a status update
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             const sender = mek.key.participant; // Get the participant who posted the status
             console.log(`New status posted by: ${sender}`);
@@ -45,6 +45,36 @@ async function initializeStatusListener(conn) {
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
                 const message = `${config.STATES_SEEN_MESSAGE}`;
                 await conn.sendMessage(sender, { text: message });
+            }
+        }
+
+        // Check if someone replied to a status Themiya posted
+        if (mek.key && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
+            const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
+            const sender = mek.key.participant;
+
+            if (isReplyToStatus) {
+                // If someone replies to a status Themiya posted
+                const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                console.log(`Reply received for status posted by Themiya: ${sender}`);
+
+                // Send the original status as a reply
+                await conn.sendMessage(sender, originalStatus);
+            }
+        }
+
+        // Check if Themiya replies to another person's status
+        if (mek.key.fromMe && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
+            const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
+            const recipient = mek.message.extendedTextMessage.contextInfo.participant;
+
+            if (isReplyToStatus) {
+                // Themiya replied to someone else's status
+                const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                console.log(`Themiya replied to status: Sending status to ${recipient}`);
+
+                // Send the original status to the person who posted it
+                await conn.sendMessage(recipient, originalStatus);
             }
         }
     });
