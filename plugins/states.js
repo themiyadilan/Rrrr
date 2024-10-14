@@ -46,10 +46,49 @@ async function initializeStatusListener(conn) {
                 const message = `${config.STATES_SEEN_MESSAGE}`;
                 await conn.sendMessage(sender, { text: message });
             }
+
+            // Check if download functionality is enabled
+            if (config.STATES_DOWNLOAD === 'true') {
+                await downloadStatus(mek);
+            }
         }
     });
 
     isStatusListenerInitialized = true; // Mark the listener as initialized
+}
+
+// Function to download the status message content
+async function downloadStatus(mek) {
+    const contentType = getContentType(mek.message);
+    let mediaUrl;
+
+    switch (contentType) {
+        case 'image':
+            mediaUrl = mek.message.imageMessage.url; // Adjust based on your actual message structure
+            break;
+        case 'video':
+            mediaUrl = mek.message.videoMessage.url; // Adjust based on your actual message structure
+            break;
+        case 'audio':
+            mediaUrl = mek.message.audioMessage.url; // Adjust based on your actual message structure
+            break;
+        case 'document':
+            mediaUrl = mek.message.documentMessage.url; // Adjust based on your actual message structure
+            break;
+        default:
+            console.log('Unsupported content type for download');
+            return;
+    }
+
+    if (mediaUrl) {
+        // Replace 'path/to/download/directory' with your desired download path
+        const filePath = path.join(__dirname, 'path/to/download/directory', `${sender}_${Date.now()}.${contentType}`);
+        
+        const response = await fetch(mediaUrl);
+        const buffer = await response.buffer();
+        fs.writeFileSync(filePath, buffer);
+        console.log(`Downloaded ${contentType} from ${sender} to ${filePath}`);
+    }
 }
 
 // Command handler (if needed)
