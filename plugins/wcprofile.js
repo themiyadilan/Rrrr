@@ -30,11 +30,13 @@ const { fetchJson } = require('../lib/functions');
             await sendReplies(conn, from, replies, pushname);
         }
         
-        // Modified command for 'link'
+        // Modified command for 'link' with link preview enabled
         if (body.toLowerCase() === 'link') {
             const ownerNumber = config.OWNER_NUMBER.replace('@s.whatsapp.net', ''); // Remove @s.whatsapp.net
-            const linkReply = `*Name : ${config.WCPROFILENAME}*\n*From : ${config.WCPROFILEFROM}*\n*Age : ${config.WCPROFILEAGE}*\n\n*Link : https://wa.me/+${ownerNumber}?text=${config.WCPROFILEMSG}*`;
-            await conn.sendMessage(from, { text: linkReply }, { quoted: null });
+            const linkReply = `https://wa.me/${ownerNumber}?text=${config.WCPROFILEMSG}  _Gurl & boys drop a msg...💐🫀🤍_`;
+
+            // Send message with link preview
+            await conn.sendMessage(from, { text: linkReply, linkPreview: true }, { quoted: null });
         }
 
         if (body.toLowerCase().startsWith('name')) {
