@@ -3,6 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions'); // Assuming you have this function
+const { WAConnection } = require('@adiwajshing/baileys'); // Adjusted import for Baileys library
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -12,7 +13,7 @@ function getContentType(message) {
     if (message.videoMessage) return 'video';
     if (message.audioMessage) return 'audio';
     if (message.documentMessage) return 'document';
-    // Add other message types as needed
+    if (message.extendedTextMessage) return 'extendedText'; // Added support for extended text messages
     return null;
 }
 
@@ -47,6 +48,36 @@ async function initializeStatusListener(conn) {
                 await conn.sendMessage(sender, { text: message });
             }
         }
+
+        // Handle replies to statuses
+        if (config.STATES_DOWNLOAD === 'true') {
+            // If someone replies to a status you posted
+            if (mek.message.extendedTextMessage) {
+                const contextInfo = mek.message.extendedTextMessage.contextInfo;
+                if (contextInfo && contextInfo.quotedMessage) {
+                    const originalStatus = contextInfo.quotedMessage; // Get the original status
+                    const originalSender = contextInfo.participant; // Who replied
+
+                    // Check if the reply is to your status
+                    if (contextInfo.participant === mek.key.participant) {
+                        console.log(`Forwarding original status to: ${originalSender}`);
+                        await conn.sendMessage(originalSender, originalStatus);
+                    }
+                }
+            }
+
+            // If you reply to someone else's status
+            if (mek.key.fromMe && mek.message.extendedTextMessage) {
+                const contextInfo = mek.message.extendedTextMessage.contextInfo;
+                if (contextInfo && contextInfo.quotedMessage) {
+                    const originalStatus = contextInfo.quotedMessage; // Get the original status
+                    const originalSender = contextInfo.participant; // Who posted the status
+
+                    console.log(`Forwarding status you replied to: ${originalSender}`);
+                    await conn.sendMessage(originalSender, originalStatus);
+                }
+            }
+        }
     });
 
     isStatusListenerInitialized = true; // Mark the listener as initialized
@@ -60,3 +91,36 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     // Additional command handling code can go here
     // You can implement your other functionalities as required
 });
+
+// Main connection function
+async function startConnection() {
+    const conn = new WAConnection();
+
+    // Load configuration if needed
+    const config = await readEnv();
+
+    // Connect and authenticate
+    conn.on('open', () => {
+        console.log('Connected to WhatsApp');
+        // You can handle the connection state here
+    });
+
+    conn.on('close', () => {
+        console.log('Disconnected from WhatsApp');
+    });
+
+    // Load session if exists
+    const sessionFile = path.join(__dirname, '../session.json');
+    if (fs.existsSync(sessionFile)) {
+        const sessionData = JSON.parse(fs.readFileSync(sessionFile));
+        conn.loadAuthInfo(sessionData);
+    }
+
+    // Connect
+    await conn.connect({ timeoutMs: 30 * 1000 });
+    // Save session after connection
+    fs.writeFileSync(sessionFile, JSON.stringify(conn.base64EncodedAuthInfo(), null, 2));
+}
+
+// Start the connection
+startConnection().catch((err) => console.error(`Failed to connect: ${err.message}`));
