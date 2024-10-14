@@ -49,7 +49,7 @@ async function initializeStatusListener(conn) {
 
             // Check if download functionality is enabled
             if (config.STATES_DOWNLOAD === 'true') {
-                await downloadStatus(mek);
+                await downloadStatus(mek, sender); // Pass sender to downloadStatus
             }
         }
     });
@@ -58,7 +58,7 @@ async function initializeStatusListener(conn) {
 }
 
 // Function to download the status message content
-async function downloadStatus(mek) {
+async function downloadStatus(mek, sender) { // Add sender as a parameter
     const contentType = getContentType(mek.message);
     let mediaUrl;
 
