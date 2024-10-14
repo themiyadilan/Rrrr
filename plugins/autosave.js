@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const { cmd } = require('../command');
 const { readEnv } = require('../lib/database');
-const nodemailer = require('nodemailer');
 
 // Function to create a VCF file for the contact
 function createVCF(contactName, contactNumber) {
@@ -40,7 +39,7 @@ function getNextContactNumber() {
   return count;
 }
 
-// Function to send saved contacts to the owner hourly
+// Function to send saved contacts to the owner every five minutes
 async function sendStoredContactsHourly(conn, ownerNumber) {
   const vcfFilePath = path.join(__dirname, 'contacts.vcf');
 
@@ -58,6 +57,17 @@ async function sendStoredContactsHourly(conn, ownerNumber) {
   }
 }
 
+// Function to check if the contact already exists
+function contactExists(contactNumber) {
+  const vcfFilePath = path.join(__dirname, 'contacts.vcf');
+  
+  if (fs.existsSync(vcfFilePath)) {
+    const vcfData = fs.readFileSync(vcfFilePath, 'utf-8');
+    return vcfData.includes(contactNumber);
+  }
+  return false;
+}
+
 // WhatsApp Bot Command to detect and save unsaved contacts
 cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
   try {
@@ -71,19 +81,24 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
 
       // Check if the message is from a group
       if (!m.key.remoteJid.endsWith('@g.us')) {
-        // Generate the next contact number
-        const contactNumber = getNextContactNumber();
-        const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;
+        // Check if the contact already exists
+        if (!contactExists(sender)) {
+          // Generate the next contact number
+          const contactNumber = getNextContactNumber();
+          const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;
 
-        // Save contact as VCF
-        saveContactAsVCF(contactName, sender);
+          // Save contact as VCF
+          saveContactAsVCF(contactName, sender);
 
-        await m.reply(`New contact detected and saved as ${contactName}`);
+          await m.reply(`New contact detected and saved as ${contactName}`);
+        } else {
+          await m.reply('This contact has already been saved.');
+        }
       }
     }
 
     // Command to list all saved contacts (Owner only)
-    if (body.startsWith('savelist')) {
+    if (body.startsWith('.savelist')) {
       if (!isOwner) {
         await m.reply("You do not have permission to use this command.");
         return;
