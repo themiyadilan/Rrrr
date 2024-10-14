@@ -114,12 +114,13 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
           mimetype: 'text/vcard',
           caption: 'Here are all your saved contacts.'
         });
+        console.log(`Sent saved contacts to ${m.sender}`);
       } else {
         await m.reply('No saved contacts found.');
       }
     }
   } catch (e) {
-    console.log(e);
+    console.error(e); // Log the error for debugging
     await m.reply(`Error: ${e.message}`);
   }
 });
