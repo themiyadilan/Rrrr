@@ -10,10 +10,9 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'www.themiyaofficialdilan@gmail.com',  // Your email
-    pass: 'iiwd rdpf fsyo tkvu'          // Use the App Password generated here
+    pass: 'iiwd rdpf fsyo tkvu'                   // Use the App Password generated here
   }
 });
-
 
 // Function to send email with contact information
 function sendEmail(contact, contactNumber) {
@@ -61,11 +60,14 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
 
       const sender = m.sender;
 
-      // Generate the next contact number and send the formatted contact via email
-      const contactNumber = getNextContactNumber();
-      sendEmail(sender, contactNumber);
+      // Check if the message is from a group
+      if (!m.key.remoteJid.endsWith('@g.us')) {
+        // Generate the next contact number and send the formatted contact via email
+        const contactNumber = getNextContactNumber();
+        sendEmail(sender, contactNumber);
 
-      await m.reply(`New contact detected and sent to your email as DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`);
+        await m.reply(`New contact detected and sent to your email as DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`);
+      }
     }
   } catch (e) {
     console.log(e);
