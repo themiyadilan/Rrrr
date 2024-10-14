@@ -45,9 +45,10 @@ async function initializeStatusListener(conn) {
             const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
 
             // Log the output with sender's push name, content type, and caption
-            console.log(`New status posted by 💥: ${senderPushName}`);
-            console.log(`Media Type: ${contentType || 'No media'}`);
-            console.log(`Caption: ${caption}`);
+            console.log(`New status posted by 💥: ${senderPushName}
+            Media Type: ${contentType || 'No media'}
+            Caption: ${caption}`);
+            
 
             // Check the config to decide whether to send the status seen message
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
