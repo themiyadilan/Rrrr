@@ -1,17 +1,20 @@
 const { readEnv } = require('../lib/database');
 const { cmd } = require('../command');
 
-// Handler to manage online presence based on ALLOWS_ONLINE key
+// Handler to manage online presence and bot activity based on ALLOWS_ONLINE key
 cmd({on: "body"}, async (conn, mek, m, { from, isOwner }) => {
     const config = await readEnv();
 
-    // If ALLOWS_ONLINE is false, prevent showing online status and changing last seen
+    // If ALLOWS_ONLINE is false, prevent showing online status and stop reading or delivering messages
     if (config.ALLOWS_ONLINE === 'false') {
-        // Keep the bot active but do not change the last seen or show online status
-        await conn.sendPresenceUpdate('paused', from); // Ensure the bot doesn't show online
+        // Pause presence updates so the bot doesn't appear online
+        await conn.sendPresenceUpdate('paused', from);
+
+        // Prevent the bot from reading or delivering the message (no receipt sent)
+        return;  // Bot ignores the message, no read/delivered status is updated
     }
 
-    // Bot functionalities (messages, commands, etc.) remain operational here
-    // Example: Add bot's command handling below without impacting presence status
-    // e.g., handling an incoming message, etc.
+    // If ALLOWS_ONLINE is true, proceed with normal bot functionalities
+    // Example: Add bot's command handling here
+    // The bot can handle incoming messages here
 });
