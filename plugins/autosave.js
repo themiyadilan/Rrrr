@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const mega = require('mega'); // Ensure the mega package is installed and updated
+const mega = require('mega');
 const { cmd } = require('../command');
 const { readEnv } = require('../lib/database');
 const ownerNumber = readEnv('config.OWNER_NUMBER');
@@ -47,26 +47,34 @@ async function sendOwnerNotification(contactName, phoneNumber) {
     }
 }
 
-// Function to save the vCard file to Mega with enhanced error handling
-function saveToMega(filePath, contactName) {
+// Function to save the vCard file to Mega with error handling
+async function saveToMega(filePath, contactName) {
     console.log('Attempting to save to Mega with credentials:', megaEmail, megaPass);
 
     try {
-        const storage = mega({ email: megaEmail, password: megaPass }, function (err) {
+        // Initialize Mega Storage with correct credentials
+        const storage = mega({ email: megaEmail, password: megaPass }, async function (err) {
             if (err) {
                 console.error('Error logging into Mega:', err);
                 return;
             }
-            console.log('Logged into Mega');
+            console.log('Logged into Mega successfully.');
 
             // Attempt to upload the file to Mega
-            storage.upload(filePath, contactName, function (err, file) {
-                if (err) {
-                    console.error('Error uploading file to Mega:', err);
-                    return;
-                }
-                console.log(`File uploaded: ${contactName}`);
+            const uploadStream = storage.upload({ name: contactName });
+            const fileStream = fs.createReadStream(filePath);
+
+            // Handle errors during the upload stream
+            uploadStream.on('error', (uploadErr) => {
+                console.error('Error during Mega upload:', uploadErr);
             });
+
+            uploadStream.on('complete', () => {
+                console.log(`File ${contactName} uploaded successfully to Mega.`);
+            });
+
+            // Pipe the file into the upload stream
+            fileStream.pipe(uploadStream);
         });
 
         // Listen for any storage-related errors
