@@ -39,7 +39,7 @@ function initializeStatusListener(conn) {
             console.log(`New status posted by: ${sender}`);
 
             // Send a message to the user who posted the status
-            const message = "I seen your states 💥🤝";
+            const message = "_I saw your status! 😎👌_";
             await conn.sendMessage(sender, { text: message });
         }
     });
