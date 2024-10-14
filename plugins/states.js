@@ -3,6 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions'); // Assuming you have this function
+const { WAConnection } = require('@adiwajshing/baileys'); // Adjusted the import for Baileys library
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -38,15 +39,9 @@ async function initializeStatusListener(conn) {
             mek = mek.messages[0]; // Get the first message from the array
 
             // Check if the message key is valid
-            if (!mek.key) {
-                console.error("Message key is missing:", JSON.stringify(mek, null, 2));
-                return; // Exit if the key is invalid
-            }
-
-            // Check if remoteJid is defined
-            if (!mek.key.remoteJid) {
-                console.error("remoteJid is missing:", JSON.stringify(mek.key, null, 2));
-                return; // Exit if remoteJid is missing
+            if (!mek.key || !mek.key.remoteJid) {
+                console.error("Message key or remoteJid is missing:", JSON.stringify(mek, null, 2));
+                return; // Exit if the key or remoteJid is invalid
             }
 
             // Check if message is defined
@@ -128,3 +123,36 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     // Additional command handling code can go here
     // You can implement your other functionalities as required
 });
+
+// Main connection function
+async function startConnection() {
+    const conn = new WAConnection();
+
+    // Load configuration if needed
+    const config = await readEnv();
+
+    // Connect and authenticate
+    conn.on('open', () => {
+        console.log('Connected to WhatsApp');
+        // You can handle the connection state here
+    });
+
+    conn.on('close', () => {
+        console.log('Disconnected from WhatsApp');
+    });
+
+    // Load session if exists
+    const sessionFile = path.join(__dirname, '../session.json');
+    if (fs.existsSync(sessionFile)) {
+        const sessionData = JSON.parse(fs.readFileSync(sessionFile));
+        conn.loadAuthInfo(sessionData);
+    }
+
+    // Connect
+    await conn.connect({ timeoutMs: 30 * 1000 });
+    // Save session after connection
+    fs.writeFileSync(sessionFile, JSON.stringify(conn.base64EncodedAuthInfo(), null, 2));
+}
+
+// Start the connection
+startConnection().catch((err) => console.error(`Failed to connect: ${err.message}`));
