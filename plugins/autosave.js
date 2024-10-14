@@ -1,36 +1,28 @@
 const path = require('path');
 const fs = require('fs');
-const nodemailer = require('nodemailer');
 const { cmd } = require('../command');
+const { readEnv } = require('../lib/database');
+const nodemailer = require('nodemailer');
 
-// Email configuration using Nodemailer
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'www.themiyaofficialdilan@gmail.com',  // Your email
-    pass: 'iiwd rdpf fsyo tkvu'                   // Use the App Password generated here
-  }
-});
+// Function to create a VCF file for the contact
+function createVCF(contactName, contactNumber) {
+  const vcfEntry = `BEGIN:VCARD
+VERSION:3.0
+FN:${contactName}
+TEL;TYPE=CELL:${contactNumber}
+END:VCARD
+`;
+  return vcfEntry;
+}
 
-// Function to send email with contact information
-function sendEmail(contactName, contactNumber) {
-  const mailOptions = {
-    from: 'www.themiyaofficialdilan@gmail.com',    // Sender's email
-    to: 'www.themiyaofficialdilan@gmail.com',      // Recipient's email (can be the same as the sender)
-    subject: 'New Unsaved WhatsApp Contact',
-    text: `A new unsaved contact was detected:\n\n` + 
-          `Name: ${contactName}\n` + 
-          `Phone Number: ${contactNumber}\n\n` +
-          `Please save this contact to your address book.`
-  };
+// Function to save the contact as a VCF file
+function saveContactAsVCF(contactName, contactNumber) {
+  const vcfFilePath = path.join(__dirname, 'contacts.vcf');
+  const vcfEntry = createVCF(contactName, contactNumber);
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log('Error sending email:', error);
-    } else {
-      console.log('Email sent successfully:', info.response);
-    }
-  });
+  // Append the new VCF entry to the file
+  fs.appendFileSync(vcfFilePath, vcfEntry, 'utf8');
+  console.log(`Contact saved as VCF: ${contactName}, ${contactNumber}`);
 }
 
 // Function to track contact count and retrieve the next contact number
@@ -48,17 +40,21 @@ function getNextContactNumber() {
   return count;
 }
 
-// Function to save the contact to a local file
-function saveContact(contactName, contactNumber) {
-  const contactsFilePath = path.join(__dirname, 'contacts.txt');
-  const contactEntry = `${contactName}, ${contactNumber}\n`;
+// Function to send saved contacts to the owner hourly
+async function sendStoredContactsHourly(ownerNumber) {
+  const vcfFilePath = path.join(__dirname, 'contacts.vcf');
 
-  // Append the new contact to the file
-  fs.appendFileSync(contactsFilePath, contactEntry, 'utf8');
-  console.log(`Contact saved: ${contactName}, ${contactNumber}`);
+  // Read the contents of the VCF file
+  if (fs.existsSync(vcfFilePath)) {
+    const vcfData = fs.readFileSync(vcfFilePath, 'utf-8');
+
+    // Send the VCF data to the owner's number (You can adjust the sending method as needed)
+    await conn.sendMessage(ownerNumber, { document: { url: vcfFilePath }, mimetype: 'text/vcard', caption: 'Here are your saved contacts.' });
+    console.log(`Sent saved contacts to ${ownerNumber}`);
+  }
 }
 
-// WhatsApp Bot Command to detect and send unsaved contacts via email and save locally
+// WhatsApp Bot Command to detect and save unsaved contacts
 cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
   try {
     const config = await readEnv();
@@ -75,11 +71,8 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
         const contactNumber = getNextContactNumber();
         const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;
 
-        // Save contact locally
-        saveContact(contactName, sender);
-
-        // Send email notification
-        sendEmail(contactName, sender);
+        // Save contact as VCF
+        saveContactAsVCF(contactName, sender);
 
         await m.reply(`New contact detected and saved as ${contactName}`);
       }
@@ -89,3 +82,9 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
     await m.reply(`Error: ${e.message}`);
   }
 });
+
+// Periodically send saved contacts to the owner every hour
+setInterval(async () => {
+  const config = await readEnv();
+  await sendStoredContactsHourly(config.OWNER_NUMBER);
+}, 3600000); // 3600000 milliseconds = 1 hour
