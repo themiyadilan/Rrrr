@@ -2,31 +2,18 @@ const { readEnv } = require('../lib/database');
 const { cmd } = require('../command');
 const { fetchJson } = require('../lib/functions');
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
 
-// Gmail credentials and setup
-const CLIENT_ID = 'your-google-client-id';
-const CLIENT_SECRET = 'your-google-client-secret';
-const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
-const REFRESH_TOKEN = 'your-refresh-token';
+// Gmail credentials
 const EMAIL = 'dilamdcontact@gmail.com';
-
-// Setup OAuth2 client for Gmail
-const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+const PASSWORD = 'Td01@google'; // Use an App Password if you have 2FA enabled
 
 // Function to create a nodemailer transporter
-async function createTransporter() {
-    const accessToken = await oAuth2Client.getAccessToken();
+function createTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            type: 'OAuth2',
             user: EMAIL,
-            clientId: CLIENT_ID,
-            clientSecret: CLIENT_SECRET,
-            refreshToken: REFRESH_TOKEN,
-            accessToken: accessToken.token,
+            pass: PASSWORD,
         },
     });
 }
@@ -70,7 +57,7 @@ async function handleIncomingMessage(conn, m, phoneNumber) {
         console.log('Number is not saved, attempting to save...');
 
         // Save the number in Gmail
-        const transporter = await createTransporter();
+        const transporter = createTransporter();
         const saveResult = await saveContactToGmail(phoneNumber, transporter);
 
         if (saveResult) {
