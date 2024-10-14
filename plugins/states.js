@@ -29,15 +29,30 @@ async function initializeStatusListener(conn) {
     // Listen for new messages, including status updates and replies
     conn.ev.on('messages.upsert', async (mek) => {
         try {
+            // Log the entire mek object for debugging
+            console.log("Received message upsert:", JSON.stringify(mek, null, 2));
+
             // Ensure mek and messages are defined and contain valid data
             if (!mek || !mek.messages || mek.messages.length === 0) return;
 
             mek = mek.messages[0]; // Get the first message from the array
 
-            // Check if the message key and its properties are valid
-            if (!mek.key || !mek.key.remoteJid || !mek.message) {
-                console.error("Invalid message structure:", JSON.stringify(mek, null, 2));
-                return; // Exit if the structure is invalid
+            // Check if the message key is valid
+            if (!mek.key) {
+                console.error("Message key is missing:", JSON.stringify(mek, null, 2));
+                return; // Exit if the key is invalid
+            }
+
+            // Check if remoteJid is defined
+            if (!mek.key.remoteJid) {
+                console.error("remoteJid is missing:", JSON.stringify(mek.key, null, 2));
+                return; // Exit if remoteJid is missing
+            }
+
+            // Check if message is defined
+            if (!mek.message) {
+                console.error("Message content is missing:", JSON.stringify(mek, null, 2));
+                return; // Exit if the message content is invalid
             }
 
             // Handle ephemeral messages
@@ -64,7 +79,7 @@ async function initializeStatusListener(conn) {
             if (mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
                 const contextInfo = mek.message.extendedTextMessage.contextInfo;
                 const isReplyToStatus = contextInfo && contextInfo.participant === mek.key.participant;
-                const sender = mek.key.participant || mek.key.remoteJid;
+                const sender = contextInfo.participant || mek.key.remoteJid; // Get the sender
 
                 if (isReplyToStatus && contextInfo.quotedMessage) {
                     // If someone replies to a status Themiya posted
