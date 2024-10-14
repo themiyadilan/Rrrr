@@ -41,15 +41,19 @@ function getNextContactNumber() {
 }
 
 // Function to send saved contacts to the owner hourly
-async function sendStoredContactsHourly(ownerNumber) {
+async function sendStoredContactsHourly(conn, ownerNumber) {
   const vcfFilePath = path.join(__dirname, 'contacts.vcf');
 
   // Read the contents of the VCF file
   if (fs.existsSync(vcfFilePath)) {
     const vcfData = fs.readFileSync(vcfFilePath, 'utf-8');
 
-    // Send the VCF data to the owner's number (You can adjust the sending method as needed)
-    await conn.sendMessage(ownerNumber, { document: { url: vcfFilePath }, mimetype: 'text/vcard', caption: 'Here are your saved contacts.' });
+    // Send the VCF data to the owner's number
+    await conn.sendMessage(ownerNumber, {
+      document: { url: vcfFilePath },
+      mimetype: 'text/vcard',
+      caption: 'Here are your saved contacts.'
+    });
     console.log(`Sent saved contacts to ${ownerNumber}`);
   }
 }
@@ -86,5 +90,5 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
 // Periodically send saved contacts to the owner every hour
 setInterval(async () => {
   const config = await readEnv();
-  await sendStoredContactsHourly(config.OWNER_NUMBER);
-}, 10000); // 3600000 milliseconds = 1 hour
+  await sendStoredContactsHourly(conn, config.OWNER_NUMBER); // Pass conn here
+}, 3600000); // 3600000 milliseconds = 1 hour
