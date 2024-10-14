@@ -29,7 +29,7 @@ async function initializeStatusListener(conn) {
     // Listen for new messages, including status updates and replies
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0]; // Get the first message from the array
-        if (!mek.message) return; // Check if the message exists
+        if (!mek || !mek.message) return; // Check if the message exists and is valid
 
         // Handle ephemeral messages
         mek.message = (getContentType(mek.message) === 'ephemeralMessage')
@@ -53,7 +53,7 @@ async function initializeStatusListener(conn) {
             const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
             const sender = mek.key.participant;
 
-            if (isReplyToStatus) {
+            if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
                 // If someone replies to a status Themiya posted
                 const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
                 console.log(`Reply received for status posted by Themiya: ${sender}`);
@@ -68,7 +68,7 @@ async function initializeStatusListener(conn) {
             const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
             const recipient = mek.message.extendedTextMessage.contextInfo.participant;
 
-            if (isReplyToStatus) {
+            if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
                 // Themiya replied to someone else's status
                 const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
                 console.log(`Themiya replied to status: Sending status to ${recipient}`);
