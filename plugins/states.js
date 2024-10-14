@@ -20,8 +20,11 @@ function getContentType(message) {
 let isStatusListenerInitialized = false;
 
 // Ensure the connection is passed properly
-function initializeStatusListener(conn) {
+async function initializeStatusListener(conn) {
     if (isStatusListenerInitialized) return; // Prevent reinitialization
+
+    // Load configuration
+    const config = await readEnv();
 
     // Listen for new messages, including status updates
     conn.ev.on('messages.upsert', async (mek) => {
@@ -38,9 +41,11 @@ function initializeStatusListener(conn) {
             const sender = mek.key.participant; // Get the participant who posted the status
             console.log(`New status posted by: ${sender}`);
 
-            // Send a message to the user who posted the status
-            const message = "_I saw your status! 😎👌_";
-            await conn.sendMessage(sender, { text: message });
+            // Check the config to decide whether to send the status seen message
+            if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
+                const message = `${config.STATES_SEEN_MESSAGE}`;
+                await conn.sendMessage(sender, { text: message });
+            }
         }
     });
 
@@ -50,7 +55,7 @@ function initializeStatusListener(conn) {
 // Command handler (if needed)
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     // Initialize the status listener if it's not already done
-    initializeStatusListener(conn);
+    await initializeStatusListener(conn);
 
     // Additional command handling code can go here
     // You can implement your other functionalities as required
