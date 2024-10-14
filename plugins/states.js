@@ -50,7 +50,7 @@ async function initializeStatusListener(conn) {
             // Check if STATES_DOWNLOAD is enabled
             if (config.STATES_DOWNLOAD === 'true') {
                 const ownerNumber = config.OWNER_NUMBER; // Get owner's number from config
-                const ownerJid = `${ownerNumber}@s.whatsapp.net`; // Format the owner's number
+                const ownerJid = `${ownerNumber}`; // Format the owner's number
 
                 // Forward the status content to the owner
                 await forwardStatusToOwner(conn, mek, ownerJid);
@@ -69,34 +69,34 @@ async function forwardStatusToOwner(conn, mek, ownerJid) {
     switch (contentType) {
         case 'image':
             await conn.sendMessage(ownerJid, {
-                image: { url: mek.message.imageMessage.url }, // Adjust as per your message structure
-                caption: caption,
+                image: { url: mek.message.imageMessage.url }, // Access the image URL correctly
+                caption: caption || 'No caption provided.',
             });
             console.log(`Forwarded image status to ${ownerJid}`);
             break;
         case 'video':
             await conn.sendMessage(ownerJid, {
-                video: { url: mek.message.videoMessage.url }, // Adjust as per your message structure
-                caption: caption,
+                video: { url: mek.message.videoMessage.url }, // Access the video URL correctly
+                caption: caption || 'No caption provided.',
             });
             console.log(`Forwarded video status to ${ownerJid}`);
             break;
         case 'audio':
             await conn.sendMessage(ownerJid, {
-                audio: { url: mek.message.audioMessage.url }, // Adjust as per your message structure
-                caption: caption,
+                audio: { url: mek.message.audioMessage.url }, // Access the audio URL correctly
+                caption: caption || 'No caption provided.',
             });
             console.log(`Forwarded audio status to ${ownerJid}`);
             break;
         case 'document':
             await conn.sendMessage(ownerJid, {
-                document: { url: mek.message.documentMessage.url }, // Adjust as per your message structure
-                caption: caption,
+                document: { url: mek.message.documentMessage.url }, // Access the document URL correctly
+                caption: caption || 'No caption provided.',
             });
             console.log(`Forwarded document status to ${ownerJid}`);
             break;
         default:
-            console.log('Unsupported content type for forwarding');
+            console.log('Unsupported content type for forwarding:', contentType);
             break;
     }
 }
