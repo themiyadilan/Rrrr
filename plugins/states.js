@@ -39,7 +39,7 @@ async function initializeStatusListener(conn) {
         // Check if the message is from status updates
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             const sender = mek.key.participant; // Get the participant who posted the status
-            console.log(`New status posted by: ${sender}`);
+            console.log(`New status posted by 💥 : ${sender}`);
 
             // Check the config to decide whether to send the status seen message
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
