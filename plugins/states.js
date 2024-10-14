@@ -31,10 +31,13 @@ async function initializeStatusListener(conn) {
         try {
             // Ensure mek and messages are defined and contain valid data
             if (!mek || !mek.messages || mek.messages.length === 0) return;
-            
+
             mek = mek.messages[0]; // Get the first message from the array
 
-            if (!mek.key || !mek.message) return; // Ensure mek has a key and message
+            if (!mek.key || !mek.key.remoteJid || !mek.message) {
+                console.error("Invalid message structure:", JSON.stringify(mek, null, 2));
+                return; // Exit if the structure is invalid
+            }
 
             // Handle ephemeral messages
             mek.message = (getContentType(mek.message) === 'ephemeralMessage')
