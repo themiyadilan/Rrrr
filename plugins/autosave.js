@@ -82,13 +82,18 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
       }
     }
 
-    // Command to list all saved contacts
+    // Command to list all saved contacts (Owner only)
     if (body.startsWith('savelist')) {
+      if (!isOwner) {
+        await m.reply("You do not have permission to use this command.");
+        return;
+      }
+
       const vcfFilePath = path.join(__dirname, 'contacts.vcf');
-      
+
       // Check if the VCF file exists
       if (fs.existsSync(vcfFilePath)) {
-        // Send the contents of the VCF file to the user
+        // Send the contents of the VCF file to the owner
         await conn.sendMessage(m.sender, {
           document: { url: vcfFilePath },
           mimetype: 'text/vcard',
@@ -104,8 +109,8 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
   }
 });
 
-// Periodically send saved contacts to the owner every hour
+// Periodically send saved contacts to the owner every five minutes
 setInterval(async () => {
   const config = await readEnv();
   await sendStoredContactsHourly(conn, config.OWNER_NUMBER); // Pass conn here
-}, 3600000); // 3600000 milliseconds = 1 hour
+}, 300000); // 300000 milliseconds = 5 minutes
