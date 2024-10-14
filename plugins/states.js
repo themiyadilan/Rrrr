@@ -34,15 +34,16 @@ async function initializeStatusListener(conn) {
 
             mek = mek.messages[0]; // Get the first message from the array
 
+            // Check if the message key and its properties are valid
             if (!mek.key || !mek.key.remoteJid || !mek.message) {
                 console.error("Invalid message structure:", JSON.stringify(mek, null, 2));
                 return; // Exit if the structure is invalid
             }
 
             // Handle ephemeral messages
-            mek.message = (getContentType(mek.message) === 'ephemeralMessage')
-                ? mek.message.ephemeralMessage.message
-                : mek.message;
+            if (getContentType(mek.message) === 'ephemeralMessage') {
+                mek.message = mek.message.ephemeralMessage.message;
+            }
 
             // Check if the message is a status update
             if (mek.key.remoteJid === 'status@broadcast') {
@@ -61,12 +62,13 @@ async function initializeStatusListener(conn) {
 
             // Check if someone replied to a status Themiya posted
             if (mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
-                const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
+                const contextInfo = mek.message.extendedTextMessage.contextInfo;
+                const isReplyToStatus = contextInfo && contextInfo.participant === mek.key.participant;
                 const sender = mek.key.participant || mek.key.remoteJid;
 
-                if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
+                if (isReplyToStatus && contextInfo.quotedMessage) {
                     // If someone replies to a status Themiya posted
-                    const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                    const originalStatus = contextInfo.quotedMessage; // Get the original status
                     console.log(`🔄 Someone replied to Themiya's status!`);
                     console.log(`🙋‍♂️ Reply received from: ${sender}`);
                     console.log(`📜 Original status details: ${JSON.stringify(originalStatus, null, 2)}`);
@@ -79,12 +81,13 @@ async function initializeStatusListener(conn) {
 
             // Check if Themiya replies to another person's status
             if (mek.key.fromMe && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
-                const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
-                const recipient = mek.message.extendedTextMessage.contextInfo.participant || mek.key.remoteJid;
+                const contextInfo = mek.message.extendedTextMessage.contextInfo;
+                const isReplyToStatus = contextInfo && contextInfo.participant !== mek.key.participant;
+                const recipient = contextInfo.participant || mek.key.remoteJid;
 
-                if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
+                if (isReplyToStatus && contextInfo.quotedMessage) {
                     // Themiya replied to someone else's status
-                    const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                    const originalStatus = contextInfo.quotedMessage; // Get the original status
                     console.log(`📨 Themiya replied to someone's status!`);
                     console.log(`💡 Sending status to the original poster: ${recipient}`);
                     console.log(`📝 Original status details: ${JSON.stringify(originalStatus, null, 2)}`);
