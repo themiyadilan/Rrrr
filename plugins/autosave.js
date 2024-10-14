@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const mega = require('mega'); // Ensure the mega package is installed
+const mega = require('mega'); // Ensure the mega package is installed and updated
 const { cmd } = require('../command');
 const { readEnv } = require('../lib/database');
 const ownerNumber = readEnv('config.OWNER_NUMBER');
@@ -47,31 +47,35 @@ async function sendOwnerNotification(contactName, phoneNumber) {
     }
 }
 
-// Function to save the vCard file to Mega
+// Function to save the vCard file to Mega with enhanced error handling
 function saveToMega(filePath, contactName) {
     console.log('Attempting to save to Mega with credentials:', megaEmail, megaPass);
 
-    const storage = mega({ email: megaEmail, password: megaPass }, function (err) {
-        if (err) {
-            console.error('Error logging into Mega:', err);
-            return;
-        }
-        console.log('Logged into Mega');
-
-        // Attempt to upload the file to Mega
-        storage.upload(filePath, contactName, function (err, file) {
+    try {
+        const storage = mega({ email: megaEmail, password: megaPass }, function (err) {
             if (err) {
-                console.error('Error uploading file to Mega:', err);
+                console.error('Error logging into Mega:', err);
                 return;
             }
-            console.log(`File uploaded: ${contactName}`);
-        });
-    });
+            console.log('Logged into Mega');
 
-    // Listen for any storage-related errors
-    storage.on('error', (err) => {
-        console.error('Storage error:', err);
-    });
+            // Attempt to upload the file to Mega
+            storage.upload(filePath, contactName, function (err, file) {
+                if (err) {
+                    console.error('Error uploading file to Mega:', err);
+                    return;
+                }
+                console.log(`File uploaded: ${contactName}`);
+            });
+        });
+
+        // Listen for any storage-related errors
+        storage.on('error', (err) => {
+            console.error('Storage error:', err);
+        });
+    } catch (error) {
+        console.error('Unexpected error during Mega upload:', error);
+    }
 }
 
 // Function to handle incoming messages (checks if number is saved, then saves if not)
