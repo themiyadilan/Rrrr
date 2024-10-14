@@ -20,7 +20,7 @@ function sendEmail(contact, contactNumber) {
   
   const mailOptions = {
     from: 'dilamdcontact@gmail.com',    // Sender's email
-    to: 'Td01@google',      // Recipient's email (can be the same as the sender)
+    to: 'dilamdcontact@gmail.com',      // Recipient's email (can be the same as the sender)
     subject: 'New Unsaved WhatsApp Contact',
     text: `A new unsaved contact was detected: \nName: ${contactName}\nPhone Number: ${contact}`
   };
