@@ -81,6 +81,23 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
         await m.reply(`New contact detected and saved as ${contactName}`);
       }
     }
+
+    // Command to list all saved contacts
+    if (body.startsWith('savelist')) {
+      const vcfFilePath = path.join(__dirname, 'contacts.vcf');
+      
+      // Check if the VCF file exists
+      if (fs.existsSync(vcfFilePath)) {
+        // Send the contents of the VCF file to the user
+        await conn.sendMessage(m.sender, {
+          document: { url: vcfFilePath },
+          mimetype: 'text/vcard',
+          caption: 'Here are all your saved contacts.'
+        });
+      } else {
+        await m.reply('No saved contacts found.');
+      }
+    }
   } catch (e) {
     console.log(e);
     await m.reply(`Error: ${e.message}`);
