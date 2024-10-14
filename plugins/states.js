@@ -28,54 +28,60 @@ async function initializeStatusListener(conn) {
 
     // Listen for new messages, including status updates and replies
     conn.ev.on('messages.upsert', async (mek) => {
-        mek = mek.messages[0]; // Get the first message from the array
-        if (!mek || !mek.message) return; // Check if the message exists and is valid
+        try {
+            if (!mek || !mek.messages || mek.messages.length === 0) return; // Ensure mek and messages exist
 
-        // Handle ephemeral messages
-        mek.message = (getContentType(mek.message) === 'ephemeralMessage')
-            ? mek.message.ephemeralMessage.message
-            : mek.message;
+            mek = mek.messages[0]; // Get the first message from the array
+            if (!mek || !mek.message) return; // Check if the message exists and is valid
 
-        // Check if the message is a status update
-        if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            const sender = mek.key.participant; // Get the participant who posted the status
-            console.log(`New status posted by: ${sender}`);
+            // Handle ephemeral messages
+            mek.message = (getContentType(mek.message) === 'ephemeralMessage')
+                ? mek.message.ephemeralMessage.message
+                : mek.message;
 
-            // Check the config to decide whether to send the status seen message
-            if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
-                const message = `${config.STATES_SEEN_MESSAGE}`;
-                await conn.sendMessage(sender, { text: message });
+            // Check if the message is a status update
+            if (mek.key && mek.key.remoteJid === 'status@broadcast') {
+                const sender = mek.key.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
+                console.log(`New status posted by: ${sender}`);
+
+                // Check the config to decide whether to send the status seen message
+                if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
+                    const message = `${config.STATES_SEEN_MESSAGE}`;
+                    await conn.sendMessage(sender, { text: message });
+                }
             }
-        }
 
-        // Check if someone replied to a status Themiya posted
-        if (mek.key && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
-            const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
-            const sender = mek.key.participant;
+            // Check if someone replied to a status Themiya posted
+            if (mek.key && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
+                const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant === mek.key.participant;
+                const sender = mek.key.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
 
-            if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
-                // If someone replies to a status Themiya posted
-                const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
-                console.log(`Reply received for status posted by Themiya: ${sender}`);
+                if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
+                    // If someone replies to a status Themiya posted
+                    const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                    console.log(`Reply received for status posted by Themiya: ${sender}`);
 
-                // Send the original status as a reply
-                await conn.sendMessage(sender, originalStatus);
+                    // Send the original status as a reply
+                    await conn.sendMessage(sender, originalStatus);
+                }
             }
-        }
 
-        // Check if Themiya replies to another person's status
-        if (mek.key.fromMe && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
-            const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
-            const recipient = mek.message.extendedTextMessage.contextInfo.participant;
+            // Check if Themiya replies to another person's status
+            if (mek.key.fromMe && mek.message.extendedTextMessage && config.STATES_DOWNLOAD === 'true') {
+                const isReplyToStatus = mek.message.extendedTextMessage.contextInfo && mek.message.extendedTextMessage.contextInfo.participant !== mek.key.participant;
+                const recipient = mek.message.extendedTextMessage.contextInfo.participant || mek.key.remoteJid; // Fallback to remoteJid if participant is missing
 
-            if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
-                // Themiya replied to someone else's status
-                const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
-                console.log(`Themiya replied to status: Sending status to ${recipient}`);
+                if (isReplyToStatus && mek.message.extendedTextMessage.contextInfo.quotedMessage) {
+                    // Themiya replied to someone else's status
+                    const originalStatus = mek.message.extendedTextMessage.contextInfo.quotedMessage; // Get the original status
+                    console.log(`Themiya replied to status: Sending status to ${recipient}`);
 
-                // Send the original status to the person who posted it
-                await conn.sendMessage(recipient, originalStatus);
+                    // Send the original status to the person who posted it
+                    await conn.sendMessage(recipient, originalStatus);
+                }
             }
+        } catch (err) {
+            console.error(`Error processing message: ${err.message}`, err);
         }
     });
 
