@@ -2,7 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
-const { fetchJson, getContentType } = require('../lib/functions'); // Assuming you have this function
+const { fetchJson } = require('../lib/functions'); // Assuming you have this function
+
+// Function to determine the content type of a message
+function getContentType(message) {
+    if (!message) return null;
+    if (message.conversation) return 'text';
+    if (message.imageMessage) return 'image';
+    if (message.videoMessage) return 'video';
+    if (message.audioMessage) return 'audio';
+    if (message.documentMessage) return 'document';
+    // Add other message types as needed
+    return null;
+}
 
 // Ensure the connection is passed properly
 function initializeStatusListener(conn) {
