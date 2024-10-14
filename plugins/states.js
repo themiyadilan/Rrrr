@@ -148,11 +148,15 @@ async function startConnection() {
         conn.loadAuthInfo(sessionData);
     }
 
-    // Connect
-    await conn.connect({ timeoutMs: 30 * 1000 });
-    // Save session after connection
-    fs.writeFileSync(sessionFile, JSON.stringify(conn.base64EncodedAuthInfo(), null, 2));
+    try {
+        // Connect
+        await conn.connect({ timeoutMs: 30 * 1000 });
+        // Save session after connection
+        fs.writeFileSync(sessionFile, JSON.stringify(conn.base64EncodedAuthInfo(), null, 2));
+    } catch (error) {
+        console.error(`❌ Failed to connect: ${error.message}`);
+    }
 }
 
 // Start the connection
-startConnection().catch((err) => console.error(`Failed to connect: ${err.message}`));
+startConnection();
