@@ -16,8 +16,13 @@ function getContentType(message) {
     return null;
 }
 
+// Flag to track whether the status listener is initialized
+let isStatusListenerInitialized = false;
+
 // Ensure the connection is passed properly
 function initializeStatusListener(conn) {
+    if (isStatusListenerInitialized) return; // Prevent reinitialization
+
     // Listen for new messages, including status updates
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0]; // Get the first message from the array
@@ -38,6 +43,8 @@ function initializeStatusListener(conn) {
             await conn.sendMessage(sender, { text: message });
         }
     });
+
+    isStatusListenerInitialized = true; // Mark the listener as initialized
 }
 
 // Command handler (if needed)
