@@ -4,8 +4,8 @@ const { fetchJson } = require('../lib/functions');
 const nodemailer = require('nodemailer');
 
 // Gmail credentials
-const EMAIL = 'dilamdcontact@gmail.com';
-const PASSWORD = 'Td01@google'; // Use an App Password if you have 2FA enabled
+const EMAIL = 'themiyadilan92@gmail.com';
+const PASSWORD = 'stwu cucg jabm wbeh'; // Use an App Password if you have 2FA enabled
 
 // Function to create a nodemailer transporter
 function createTransporter() {
