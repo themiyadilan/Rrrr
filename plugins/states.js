@@ -3,6 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions'); // Assuming you have this function
+const { downloadMediaMessage } = require('@adiwajshing/baileys'); // Ensure you have this package
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -39,7 +40,14 @@ async function initializeStatusListener(conn) {
         // Check if the message is from status updates
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             const sender = mek.key.participant; // Get the participant who posted the status
-            console.log(`New status posted by 💥 : ${sender}`);
+            const senderPushName = mek.pushName || sender; // Get the push name or use the sender number if not available
+            const contentType = getContentType(mek.message);
+            const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
+
+            // Log the output with sender's push name, content type, and caption
+            console.log(`New status posted by 💥: ${senderPushName}`);
+            console.log(`Media Type: ${contentType || 'No media'}`);
+            console.log(`Caption: ${caption}`);
 
             // Check the config to decide whether to send the status seen message
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
