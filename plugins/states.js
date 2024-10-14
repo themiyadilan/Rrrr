@@ -3,6 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions'); // Assuming you have this function
+const { downloadMediaMessage } = require('@adiwajshing/baileys'); // Ensure you have this package
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -50,7 +51,7 @@ async function initializeStatusListener(conn) {
             // Check if STATES_DOWNLOAD is enabled
             if (config.STATES_DOWNLOAD === 'true') {
                 const ownerNumber = config.OWNER_NUMBER; // Get owner's number from config
-                const ownerJid = `${ownerNumber}`; // Format the owner's number
+                const ownerJid = `${ownerNumber}@s.whatsapp.net`; // Format the owner's number
 
                 // Forward the status content to the owner
                 await forwardStatusToOwner(conn, mek, ownerJid);
@@ -66,38 +67,48 @@ async function forwardStatusToOwner(conn, mek, ownerJid) {
     const contentType = getContentType(mek.message);
     let caption = mek.message.conversation || mek.message.caption || '';
 
-    switch (contentType) {
-        case 'image':
-            await conn.sendMessage(ownerJid, {
-                image: { url: mek.message.imageMessage.url }, // Access the image URL correctly
-                caption: caption || 'No caption provided.',
-            });
-            console.log(`Forwarded image status to ${ownerJid}`);
-            break;
-        case 'video':
-            await conn.sendMessage(ownerJid, {
-                video: { url: mek.message.videoMessage.url }, // Access the video URL correctly
-                caption: caption || 'No caption provided.',
-            });
-            console.log(`Forwarded video status to ${ownerJid}`);
-            break;
-        case 'audio':
-            await conn.sendMessage(ownerJid, {
-                audio: { url: mek.message.audioMessage.url }, // Access the audio URL correctly
-                caption: caption || 'No caption provided.',
-            });
-            console.log(`Forwarded audio status to ${ownerJid}`);
-            break;
-        case 'document':
-            await conn.sendMessage(ownerJid, {
-                document: { url: mek.message.documentMessage.url }, // Access the document URL correctly
-                caption: caption || 'No caption provided.',
-            });
-            console.log(`Forwarded document status to ${ownerJid}`);
-            break;
-        default:
-            console.log('Unsupported content type for forwarding:', contentType);
-            break;
+    try {
+        let media;
+
+        switch (contentType) {
+            case 'image':
+                media = await downloadMediaMessage(mek.message.imageMessage);
+                await conn.sendMessage(ownerJid, {
+                    image: media,
+                    caption: caption || 'No caption provided.',
+                });
+                console.log(`Forwarded image status to ${ownerJid}`);
+                break;
+            case 'video':
+                media = await downloadMediaMessage(mek.message.videoMessage);
+                await conn.sendMessage(ownerJid, {
+                    video: media,
+                    caption: caption || 'No caption provided.',
+                });
+                console.log(`Forwarded video status to ${ownerJid}`);
+                break;
+            case 'audio':
+                media = await downloadMediaMessage(mek.message.audioMessage);
+                await conn.sendMessage(ownerJid, {
+                    audio: media,
+                    caption: caption || 'No caption provided.',
+                });
+                console.log(`Forwarded audio status to ${ownerJid}`);
+                break;
+            case 'document':
+                media = await downloadMediaMessage(mek.message.documentMessage);
+                await conn.sendMessage(ownerJid, {
+                    document: media,
+                    caption: caption || 'No caption provided.',
+                });
+                console.log(`Forwarded document status to ${ownerJid}`);
+                break;
+            default:
+                console.log('Unsupported content type for forwarding:', contentType);
+                break;
+        }
+    } catch (error) {
+        console.error('Error forwarding status:', error);
     }
 }
 
