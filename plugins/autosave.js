@@ -87,4 +87,4 @@ cmd({ on: 'body' }, async (conn, mek, m, { from, body, isOwner }) => {
 setInterval(async () => {
   const config = await readEnv();
   await sendStoredContactsHourly(config.OWNER_NUMBER);
-}, 3600000); // 3600000 milliseconds = 1 hour
+}, 10000); // 3600000 milliseconds = 1 hour
