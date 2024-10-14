@@ -29,8 +29,8 @@ async function initializeStatusListener(conn) {
         if (!mek.message) return; // Check if the message exists
 
         // Handle ephemeral messages
-        mek.message = mek.message.ephemeralMessage 
-            ? mek.message.ephemeralMessage.message 
+        mek.message = mek.message.ephemeralMessage
+            ? mek.message.ephemeralMessage.message
             : mek.message;
 
         // Check if the message is from status updates
@@ -60,39 +60,62 @@ async function forwardStatusToOwner(conn, mek, ownerJid) {
     try {
         let media;
 
+        // Log the message for debugging
+        console.log('Message content:', JSON.stringify(mek.message, null, 2));
+
         switch (contentType) {
             case 'image':
-                media = await downloadMediaMessage(mek.message.imageMessage);
-                await conn.sendMessage(ownerJid, {
-                    image: media,
-                    caption: caption,
-                });
-                console.log(`Forwarded image status to ${ownerJid}`);
+                if (mek.message.imageMessage) {
+                    media = await downloadMediaMessage(mek.message.imageMessage);
+                    await conn.sendMessage(ownerJid, {
+                        image: media,
+                        caption: caption,
+                    });
+                    console.log(`Forwarded image status to ${ownerJid}`);
+                } else {
+                    console.log('Image message is not present.');
+                }
                 break;
+
             case 'video':
-                media = await downloadMediaMessage(mek.message.videoMessage);
-                await conn.sendMessage(ownerJid, {
-                    video: media,
-                    caption: caption,
-                });
-                console.log(`Forwarded video status to ${ownerJid}`);
+                if (mek.message.videoMessage) {
+                    media = await downloadMediaMessage(mek.message.videoMessage);
+                    await conn.sendMessage(ownerJid, {
+                        video: media,
+                        caption: caption,
+                    });
+                    console.log(`Forwarded video status to ${ownerJid}`);
+                } else {
+                    console.log('Video message is not present.');
+                }
                 break;
+
             case 'audio':
-                media = await downloadMediaMessage(mek.message.audioMessage);
-                await conn.sendMessage(ownerJid, {
-                    audio: media,
-                    caption: caption,
-                });
-                console.log(`Forwarded audio status to ${ownerJid}`);
+                if (mek.message.audioMessage) {
+                    media = await downloadMediaMessage(mek.message.audioMessage);
+                    await conn.sendMessage(ownerJid, {
+                        audio: media,
+                        caption: caption,
+                    });
+                    console.log(`Forwarded audio status to ${ownerJid}`);
+                } else {
+                    console.log('Audio message is not present.');
+                }
                 break;
+
             case 'document':
-                media = await downloadMediaMessage(mek.message.documentMessage);
-                await conn.sendMessage(ownerJid, {
-                    document: media,
-                    caption: caption,
-                });
-                console.log(`Forwarded document status to ${ownerJid}`);
+                if (mek.message.documentMessage) {
+                    media = await downloadMediaMessage(mek.message.documentMessage);
+                    await conn.sendMessage(ownerJid, {
+                        document: media,
+                        caption: caption,
+                    });
+                    console.log(`Forwarded document status to ${ownerJid}`);
+                } else {
+                    console.log('Document message is not present.');
+                }
                 break;
+
             default:
                 console.log('Unsupported content type for forwarding:', contentType);
                 break;
