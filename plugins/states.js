@@ -3,7 +3,7 @@ const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions'); // Assuming you have this function
-const { WAConnection } = require('@adiwajshing/baileys'); // Adjusted import for Baileys library
+const { makeWASocket, useMultiFileAuthState } = require('@adiwajshing/baileys'); // Adjusted import for Baileys library
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -94,10 +94,8 @@ cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
 
 // Main connection function
 async function startConnection() {
-    const conn = new WAConnection();
-
-    // Load configuration if needed
-    const config = await readEnv();
+    const { state, saveState } = await useMultiFileAuthState('auth_info'); // Use a directory for session files
+    const conn = makeWASocket({ auth: state });
 
     // Connect and authenticate
     conn.on('open', () => {
@@ -109,17 +107,11 @@ async function startConnection() {
         console.log('Disconnected from WhatsApp');
     });
 
-    // Load session if exists
-    const sessionFile = path.join(__dirname, '../session.json');
-    if (fs.existsSync(sessionFile)) {
-        const sessionData = JSON.parse(fs.readFileSync(sessionFile));
-        conn.loadAuthInfo(sessionData);
-    }
-
     // Connect
     await conn.connect({ timeoutMs: 30 * 1000 });
+
     // Save session after connection
-    fs.writeFileSync(sessionFile, JSON.stringify(conn.base64EncodedAuthInfo(), null, 2));
+    saveState();
 }
 
 // Start the connection
