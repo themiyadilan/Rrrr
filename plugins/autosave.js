@@ -9,18 +9,19 @@ const { fetchJson } = require('../lib/functions');
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'dilamdcontact@gmail.com',  // Replace with your email
-    pass: 'Td01@google'    // Replace with your email password
+    user: 'www.themiyaofficialdilan@gmail.com',  // Your email
+    pass: 'iiwd rdpf fsyo tkvu'          // Use the App Password generated here
   }
 });
+
 
 // Function to send email with contact information
 function sendEmail(contact, contactNumber) {
   const contactName = `DILAMD CONTACT (${contactNumber.toString().padStart(4, '0')})`;  // Format contact as DILAMD CONTACT (0001)
   
   const mailOptions = {
-    from: 'dilamdcontact@gmail.com',    // Sender's email
-    to: 'dilamdcontact@gmail.com',      // Recipient's email (can be the same as the sender)
+    from: 'www.themiyaofficialdilan@gmail.com',    // Sender's email
+    to: 'www.themiyaofficialdilan@gmail.com',      // Recipient's email (can be the same as the sender)
     subject: 'New Unsaved WhatsApp Contact',
     text: `A new unsaved contact was detected: \nName: ${contactName}\nPhone Number: ${contact}`
   };
