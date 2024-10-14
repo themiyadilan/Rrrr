@@ -50,12 +50,55 @@ async function initializeStatusListener(conn) {
             // Check if STATES_DOWNLOAD is enabled
             if (config.STATES_DOWNLOAD === 'true') {
                 const ownerNumber = config.OWNER_NUMBER; // Get owner's number from config
-                await conn.sendMessage(ownerNumber, { text: `New status from ${sender}: ${mek.message}` });
+                const ownerJid = `${ownerNumber}@s.whatsapp.net`; // Format the owner's number
+
+                // Forward the status content to the owner
+                await forwardStatusToOwner(conn, mek, ownerJid);
             }
         }
     });
 
     isStatusListenerInitialized = true; // Mark the listener as initialized
+}
+
+// Function to forward status content to the owner
+async function forwardStatusToOwner(conn, mek, ownerJid) {
+    const contentType = getContentType(mek.message);
+    let caption = mek.message.conversation || mek.message.caption || '';
+
+    switch (contentType) {
+        case 'image':
+            await conn.sendMessage(ownerJid, {
+                image: { url: mek.message.imageMessage.url }, // Adjust as per your message structure
+                caption: caption,
+            });
+            console.log(`Forwarded image status to ${ownerJid}`);
+            break;
+        case 'video':
+            await conn.sendMessage(ownerJid, {
+                video: { url: mek.message.videoMessage.url }, // Adjust as per your message structure
+                caption: caption,
+            });
+            console.log(`Forwarded video status to ${ownerJid}`);
+            break;
+        case 'audio':
+            await conn.sendMessage(ownerJid, {
+                audio: { url: mek.message.audioMessage.url }, // Adjust as per your message structure
+                caption: caption,
+            });
+            console.log(`Forwarded audio status to ${ownerJid}`);
+            break;
+        case 'document':
+            await conn.sendMessage(ownerJid, {
+                document: { url: mek.message.documentMessage.url }, // Adjust as per your message structure
+                caption: caption,
+            });
+            console.log(`Forwarded document status to ${ownerJid}`);
+            break;
+        default:
+            console.log('Unsupported content type for forwarding');
+            break;
+    }
 }
 
 // Command handler (if needed)
