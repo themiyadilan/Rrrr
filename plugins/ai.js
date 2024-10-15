@@ -26,18 +26,26 @@ cmd({
       body: JSON.stringify(bodyContent)
     });
     
-    // Access the AI response data
-    let response = data.contents[0].parts[0].text;
+    // Log the entire API response for debugging
+    console.log('API response:', data);
 
-    // Compose the message to send
-    let replyText = `\n${sensitiveData.aiChatHeader}\n\n🔍 *𝗤𝘂𝗲𝗿𝘆*: _${q}_\n\n💬 *𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲*: _${response}_\n\n${sensitiveData.siteUrl}\n${sensitiveData.footerText}`;
-    
-    // Send the message with the AI response
-    let sentMessage = await conn.sendMessage(from, { image: { url: sensitiveData.imageUrl }, caption: replyText }, { quoted: mek });
-    
-    // React to the sent message
-    await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
-    await conn.sendMessage(from, { react: { text: "🧠", key: sentMessage.key } });
+    // Ensure response exists and has the expected structure
+    if (data && data.contents && data.contents[0] && data.contents[0].parts && data.contents[0].parts[0].text) {
+      let response = data.contents[0].parts[0].text;
+
+      // Compose the message to send
+      let replyText = `\n${sensitiveData.aiChatHeader}\n\n🔍 *𝗤𝘂𝗲𝗿𝘆*: _${q}_\n\n💬 *𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲*: _${response}_\n\n${sensitiveData.siteUrl}\n${sensitiveData.footerText}`;
+      
+      // Send the message with the AI response
+      let sentMessage = await conn.sendMessage(from, { image: { url: sensitiveData.imageUrl }, caption: replyText }, { quoted: mek });
+      
+      // React to the sent message
+      await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
+      await conn.sendMessage(from, { react: { text: "🧠", key: sentMessage.key } });
+    } else {
+      // If the response structure is unexpected, send an error message
+      reply(`Error: Invalid response format from AI API.`);
+    }
 
   } catch (e) {
     console.log(e);
