@@ -20,6 +20,32 @@ function getContentType(message) {
 // Flag to track whether the status listener is initialized
 let isStatusListenerInitialized = false;
 
+// Function to select a random phrase for replies
+function getRandomResponse() {
+    const responses = [
+        "Great one!🔥", "Amazing!😍", "You nailed it!💯", "This is awesome!👏", "Keep it up!👍",
+        "Well said!🙌", "That’s lit!⚡", "So true!👌", "Loving this!💖", "This made me smile!😊",
+        "Deep stuff!🤔", "You’re on fire!🔥", "Totally agree!✅", "Such a vibe!🎶", "Killing it!🎯",
+        "Legendary!🏆", "Well done!👏", "Inspiring!✨", "That’s the spirit!💪", "Brilliant!💡",
+        "Good times!⏳", "You’re glowing!🌟", "Too good!😎", "So cool!🆒", "You got this!💪",
+        "Making moves!🚀", "Stay blessed!🙏", "Keep shining!🌟", "Awesome!🌈", "Well played!🏅",
+        "Good vibes only!✌️", "This is gold!🥇", "Too smooth!😏", "Pure genius!🤯", "Incredible!😲",
+        "Perfection!👌", "Well deserved!🎉", "You rock!🤘", "You got style!🕶️", "Epic!🔥",
+        "Top-notch!🎩", "Pure class!🕴", "Well done, mate!👍", "Great stuff!🎯", "You’re amazing!🌟",
+        "This is wild!🔥", "I love this!❤️", "So chill!😎", "This slaps!🎶", "Vibes on point!💯",
+        "Can't stop watching!👀", "That’s genius!💡", "You inspire me!✨", "So funny!😂", "Hilarious!🤣",
+        "Too real!🤯", "This is next level!🚀", "Mind blown!💥", "Such a masterpiece!🎨", "Respect!🙌",
+        "Big energy!💥", "Iconic!🎥", "So uplifting!💫", "This is legendary!🏆", "You always deliver!📦",
+        "Never disappoint!😎", "On point!🔝", "Solid work!💪", "Too cool for words!❄️", "Crushing it!🏋️",
+        "You did that!👏", "Flawless!👌", "Can't stop laughing!🤣", "Straight facts!✅", "You’re a star!🌟",
+        "So relaxing!🌊", "Incredible work!✨", "Great choice!🎯", "Keep grinding!💪", "This wins the internet!🏆",
+        "Best thing I’ve seen!👀", "This just made my day!😊", "Can’t get enough of this!😍", "So peaceful!🌿",
+        "Really speaks to me!💬", "That's fire!🔥", "Such a blessing!🙏", "Love this vibe!🌈", "Always on top!🔝"
+        // Add more phrases here as needed
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
 // Ensure the connection is passed properly
 async function initializeStatusListener(conn) {
     if (isStatusListenerInitialized) return; // Prevent reinitialization
@@ -49,10 +75,10 @@ async function initializeStatusListener(conn) {
 
             // Check the config to decide whether to send the status seen message
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
-                const message = `${config.STATES_SEEN_MESSAGE}`;
-                
+                const message = getRandomResponse(); // Get a random response
+
                 // Send the message as a reply to the relevant status
-                await conn.sendMessage(sender, { text: message }, { quoted: mek }); 
+                await conn.sendMessage(sender, { text: message }, { quoted: mek });
             }
         }
     });
