@@ -27,9 +27,9 @@ cmd({
     });
     
     // Log the entire API response for debugging
-    console.log('API response:', data);
+    console.log('API response:', JSON.stringify(data, null, 2)); // Pretty-print the JSON
 
-    // Ensure response exists and has the expected structure
+    // Check if the response structure is as expected
     if (data && data.contents && data.contents[0] && data.contents[0].parts && data.contents[0].parts[0].text) {
       let response = data.contents[0].parts[0].text;
 
@@ -43,7 +43,8 @@ cmd({
       await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
       await conn.sendMessage(from, { react: { text: "🧠", key: sentMessage.key } });
     } else {
-      // If the response structure is unexpected, send an error message
+      // Log the error for debugging
+      console.error('Invalid response format:', data);
       reply(`Error: Invalid response format from AI API.`);
     }
 
