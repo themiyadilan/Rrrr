@@ -11,41 +11,38 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
   try {
-    // Define the new API URL with the new key
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyByitRjKUtDonuVtpJm1R-RSdPdFPf-tcY`;
     
-    // Prepare the body content for the API request
     const bodyContent = {
       contents: [{ parts: [{ text: q }] }]
     };
     
-    // Fetch the AI response
     let data = await fetchJson(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bodyContent)
     });
-    
-    // Log the entire API response for debugging
-    console.log('API response:', JSON.stringify(data, null, 2)); // Pretty-print the JSON
 
-    // Check if the response structure is as expected
+    console.log('API response:', JSON.stringify(data, null, 2)); // Log the API response
+
+    // Adjust based on the actual response structure
     if (data && data.contents && data.contents[0] && data.contents[0].parts && data.contents[0].parts[0].text) {
       let response = data.contents[0].parts[0].text;
 
-      // Compose the message to send
       let replyText = `\n${sensitiveData.aiChatHeader}\n\n🔍 *𝗤𝘂𝗲𝗿𝘆*: _${q}_\n\n💬 *𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲*: _${response}_\n\n${sensitiveData.siteUrl}\n${sensitiveData.footerText}`;
       
-      // Send the message with the AI response
       let sentMessage = await conn.sendMessage(from, { image: { url: sensitiveData.imageUrl }, caption: replyText }, { quoted: mek });
       
-      // React to the sent message
       await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
       await conn.sendMessage(from, { react: { text: "🧠", key: sentMessage.key } });
     } else {
-      // Log the error for debugging
       console.error('Invalid response format:', data);
       reply(`Error: Invalid response format from AI API.`);
+    }
+
+    // Additional error handling
+    if (data.error) {
+      reply(`Error: ${data.error.message || 'Unknown error occurred.'}`);
     }
 
   } catch (e) {
