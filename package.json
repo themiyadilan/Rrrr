@@ -24,6 +24,7 @@
     "fs-extra": "^11.1.0",
     "path": "^0.12.7",
     "node-fetch": "^2.6.1",
+    "whatsapp-web.js":"1.26.0",
     "megajs": "^1.1.0",
     "vm": "^0.1.0",
     "qrcode-terminal": "^0.12.0",
