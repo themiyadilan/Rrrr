@@ -1,6 +1,7 @@
 const { cmd } = require('../command');
 const yts = require('yt-search');
 const ytdl = require('ytdl-core');
+const { PassThrough } = require('stream');
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
 
 const formatViews = views => views >= 1_000_000_000 ? `${(views / 1_000_000_000).toFixed(1)}B` : 
@@ -30,12 +31,16 @@ cmd({
         await conn.sendPresenceUpdate('typing', from);
         await conn.sendMessage(from, { image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
 
-        // Downloading audio using ytdl-core
-        const downloadUrl = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
-        
+        // Creating a readable stream
+        const audioStream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
+        const passThrough = new PassThrough();
+        audioStream.pipe(passThrough);
+
         await conn.sendPresenceUpdate('recording', from);
-        await conn.sendMessage(from, { audio: { url: downloadUrl }, mimetype: "audio/mpeg" }, { quoted: mek });
-        await conn.sendMessage(from, { document: { url: downloadUrl }, mimetype: "audio/mpeg", fileName: `${data.title}.mp3`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+
+        // Send the stream as audio directly
+        await conn.sendMessage(from, { audio: { stream: passThrough }, mimetype: "audio/mpeg", fileName: `${data.title}.mp3` }, { quoted: mek });
+        
     } catch (e) {
         console.log(e);
         reply(`Error: ${e.message}`);
@@ -65,11 +70,14 @@ cmd({
         await conn.sendPresenceUpdate('typing', from);
         await conn.sendMessage(from, { image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
 
-        // Downloading video using ytdl-core
-        const downloadUrl = ytdl(url, { quality: 'highestvideo' });
+        // Creating a readable stream
+        const videoStream = ytdl(url, { quality: 'highestvideo' });
+        const passThrough = new PassThrough();
+        videoStream.pipe(passThrough);
 
-        await conn.sendMessage(from, { video: { url: downloadUrl }, mimetype: "video/mp4" }, { quoted: mek });
-        await conn.sendMessage(from, { document: { url: downloadUrl }, mimetype: "video/mp4", fileName: `${data.title}.mp4`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+        // Send the stream as video directly
+        await conn.sendMessage(from, { video: { stream: passThrough }, mimetype: "video/mp4", fileName: `${data.title}.mp4` }, { quoted: mek });
+        
     } catch (e) {
         console.log(e);
         reply(`Error: ${e.message}`);
