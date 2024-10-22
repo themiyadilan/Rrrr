@@ -33,6 +33,7 @@
     "googleapis":"144.0.0",
     "ytdl-core":"4.11.5",
     "api-dylux":"1.8.5",
+    "yt-dlp-exec":"1.0.2",
     "mongoose":"8.5.3",
     "speedtest-net":"2.2.0",
     "systeminformation":"5.23.5",
