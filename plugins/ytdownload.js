@@ -1,6 +1,6 @@
 const { cmd } = require('../command');
 const yts = require('yt-search');
-const ytdl = require('yt-dl-exec');
+const ytdl = require('ytdl-core');
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
 
 const formatViews = views => views >= 1_000_000_000 ? `${(views / 1_000_000_000).toFixed(1)}B` : 
@@ -30,14 +30,8 @@ cmd({
         await conn.sendPresenceUpdate('typing', from);
         await conn.sendMessage(from, { image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
 
-        // Downloading audio using yt-dl-exec
-        const audioInfo = await ytdl(url, {
-            extractAudio: true,
-            audioFormat: 'mp3',
-            output: '%(title)s.%(ext)s'
-        });
-
-        const downloadUrl = audioInfo._filename;
+        // Downloading audio using ytdl-core
+        const downloadUrl = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
         
         await conn.sendPresenceUpdate('recording', from);
         await conn.sendMessage(from, { audio: { url: downloadUrl }, mimetype: "audio/mpeg" }, { quoted: mek });
@@ -71,13 +65,8 @@ cmd({
         await conn.sendPresenceUpdate('typing', from);
         await conn.sendMessage(from, { image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
 
-        // Downloading video using yt-dl-exec
-        const videoInfo = await ytdl(url, {
-            format: 'mp4',
-            output: '%(title)s.%(ext)s'
-        });
-
-        const downloadUrl = videoInfo._filename;
+        // Downloading video using ytdl-core
+        const downloadUrl = ytdl(url, { quality: 'highestvideo' });
 
         await conn.sendMessage(from, { video: { url: downloadUrl }, mimetype: "video/mp4" }, { quoted: mek });
         await conn.sendMessage(from, { document: { url: downloadUrl }, mimetype: "video/mp4", fileName: `${data.title}.mp4`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
