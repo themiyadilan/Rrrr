@@ -37,9 +37,18 @@ cmd({
         const audioStream = new PassThrough();
         downloadUrl.pipe(audioStream);
 
-        await conn.sendPresenceUpdate('recording', from);
-        await conn.sendMessage(from, { audio: { stream: audioStream }, mimetype: "audio/mpeg" }, { quoted: mek });
-        await conn.sendMessage(from, { document: { stream: audioStream }, mimetype: "audio/mpeg", fileName: `${data.title}.mp3`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+        // Wait for the stream to finish
+        audioStream.on('finish', async () => {
+            await conn.sendPresenceUpdate('recording', from);
+            await conn.sendMessage(from, { audio: { stream: audioStream }, mimetype: "audio/mpeg" }, { quoted: mek });
+            await conn.sendMessage(from, { document: { stream: audioStream }, mimetype: "audio/mpeg", fileName: `${data.title}.mp3`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+        });
+
+        // Error handling
+        audioStream.on('error', (err) => {
+            console.log('Audio Stream Error:', err);
+            reply(`Error: ${err.message}`);
+        });
     } catch (e) {
         console.log(e);
         reply(`Error: ${e.message}`);
@@ -74,8 +83,17 @@ cmd({
         const videoStream = new PassThrough();
         downloadUrl.pipe(videoStream);
 
-        await conn.sendMessage(from, { video: { stream: videoStream }, mimetype: "video/mp4" }, { quoted: mek });
-        await conn.sendMessage(from, { document: { stream: videoStream }, mimetype: "video/mp4", fileName: `${data.title}.mp4`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+        // Wait for the stream to finish
+        videoStream.on('finish', async () => {
+            await conn.sendMessage(from, { video: { stream: videoStream }, mimetype: "video/mp4" }, { quoted: mek });
+            await conn.sendMessage(from, { document: { stream: videoStream }, mimetype: "video/mp4", fileName: `${data.title}.mp4`, caption: "💻 *ᴍᴀᴅᴇ ʙʏ ᴍʀᴅɪʟᴀ*" }, { quoted: mek });
+        });
+
+        // Error handling
+        videoStream.on('error', (err) => {
+            console.log('Video Stream Error:', err);
+            reply(`Error: ${err.message}`);
+        });
     } catch (e) {
         console.log(e);
         reply(`Error: ${e.message}`);
