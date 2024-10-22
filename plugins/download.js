@@ -148,16 +148,35 @@ cmd({
         const url = args.join(' '); // Extracting the URL from the command
         let wm = config.FOOTER;
 
+        // Log the command and URL being processed
+        console.log(`Command: ${command}, URL: ${url}`);
+
         if (command.startsWith('fb')) {
-            await conn.sendMessage(from, { video: { url: url }, mimetype: "video/mp4", caption: `📺 FB VIDEO 🚀✨\n\n ${yourName}` }, { quoted: mek });
+            // Ensure the URL is valid
+            if (url) {
+                await conn.sendMessage(from, { video: { url: url }, mimetype: "video/mp4", caption: `📺 FB VIDEO 🚀✨\n\n ${yourName}` }, { quoted: mek });
+            } else {
+                reply('Invalid FB video URL.');
+            }
         } else if (command.startsWith('tt')) {
-            await conn.sendMessage(from, { video: { url: url }, mimetype: "video/mp4", caption: `🚀 TIKTOK VIDEO 🚀✨\n\n ${yourName}` }, { quoted: mek });
+            // Ensure the URL is valid
+            if (url) {
+                await conn.sendMessage(from, { video: { url: url }, mimetype: "video/mp4", caption: `🚀 TIKTOK VIDEO 🚀✨\n\n ${yourName}` }, { quoted: mek });
+            } else {
+                reply('Invalid TikTok video URL.');
+            }
         } else if (command === 'ttaudio') {
-            await conn.sendMessage(from, { audio: { url: url }, mimetype: "audio/mpeg" }, { quoted: mek });
+            // Ensure the URL is valid
+            if (url) {
+                await conn.sendMessage(from, { audio: { url: url }, mimetype: "audio/mpeg" }, { quoted: mek });
+            } else {
+                reply('Invalid audio URL.');
+            }
         }
+
         await conn.sendMessage(from, { react: { text: '✅', key: mek.key } });
     } catch (e) {
-        console.error(e);
+        console.error('Error while sending media:', e);
         reply('*Error !!*');
     }
 });
