@@ -19,10 +19,10 @@ const yourName = sensitiveData.nameSignature;
 async function sendButtonMessage(conn, from, buttons, m, message) {
     try {
         const buttonMessage = {
-            caption: message.body,
+            text: message.body,
             footer: message.footer,
             buttons: buttons,
-            headerType: 4 // This may need to change based on your implementation
+            headerType: 4 // Adjust based on your implementation
         };
         await conn.sendMessage(from, buttonMessage, { quoted: m });
     } catch (error) {
@@ -46,21 +46,17 @@ cmd({
 
         if (data?.data?.hd) {
             buttons.push({
-                name: 'download_hd',
-                buttonParamsJson: JSON.stringify({
-                    title: 'DOWNLOAD FB HD VIDEO',
-                    id: `fbhd ${data.data.hd}`
-                })
+                buttonId: `fbhd ${data.data.hd}`,
+                buttonText: { displayText: 'DOWNLOAD FB HD VIDEO' },
+                type: 1
             });
         }
 
         if (data?.data?.sd) {
             buttons.push({
-                name: 'download_sd',
-                buttonParamsJson: JSON.stringify({
-                    title: 'DOWNLOAD FB SD VIDEO',
-                    id: `fb ${data.data.sd}`
-                })
+                buttonId: `fb ${data.data.sd}`,
+                buttonText: { displayText: 'DOWNLOAD FB SD VIDEO' },
+                type: 1
             });
         }
 
@@ -95,31 +91,25 @@ cmd({
 
         if (data?.data?.no_wm) {
             buttons.push({
-                name: 'download_no_watermark',
-                buttonParamsJson: JSON.stringify({
-                    title: 'DOWNLOAD NO-WATERMARK VIDEO',
-                    id: `ttnw ${data.data.no_wm}`
-                })
+                buttonId: `ttnw ${data.data.no_wm}`,
+                buttonText: { displayText: 'DOWNLOAD NO-WATERMARK VIDEO' },
+                type: 1
             });
         }
 
         if (data?.data?.wm) {
             buttons.push({
-                name: 'download_watermark',
-                buttonParamsJson: JSON.stringify({
-                    title: 'DOWNLOAD WATERMARK VIDEO',
-                    id: `ttwm ${data.data.wm}`
-                })
+                buttonId: `ttwm ${data.data.wm}`,
+                buttonText: { displayText: 'DOWNLOAD WATERMARK VIDEO' },
+                type: 1
             });
         }
 
         if (data?.data?.audio) {
             buttons.push({
-                name: 'download_audio',
-                buttonParamsJson: JSON.stringify({
-                    title: 'DOWNLOAD AUDIO',
-                    id: `ttaudio ${data.data.audio}`
-                })
+                buttonId: `ttaudio ${data.data.audio}`,
+                buttonText: { displayText: 'DOWNLOAD AUDIO' },
+                type: 1
             });
         }
 
