@@ -17,14 +17,17 @@ const yourName = sensitiveData.nameSignature;
 
 // Function to send messages with buttons
 async function sendButtonMessage(conn, from, buttons, m, message) {
-    const buttonMessage = {
-        image: message.image || null,
-        caption: message.body,
-        footer: message.footer,
-        buttons: buttons,
-        headerType: 4
-    };
-    await conn.sendMessage(from, buttonMessage, { quoted: m });
+    try {
+        const buttonMessage = {
+            caption: message.body,
+            footer: message.footer,
+            buttons: buttons,
+            headerType: 4 // This may need to change based on your implementation
+        };
+        await conn.sendMessage(from, buttonMessage, { quoted: m });
+    } catch (error) {
+        console.error('Failed to send button message:', error);
+    }
 }
 
 // Command for downloading Facebook videos
@@ -41,7 +44,7 @@ cmd({
         let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`);
         let buttons = [];
 
-        if (data.data.hd) {
+        if (data?.data?.hd) {
             buttons.push({
                 name: 'download_hd',
                 buttonParamsJson: JSON.stringify({
@@ -50,8 +53,8 @@ cmd({
                 })
             });
         }
-        
-        if (data.data.sd) {
+
+        if (data?.data?.sd) {
             buttons.push({
                 name: 'download_sd',
                 buttonParamsJson: JSON.stringify({
@@ -90,7 +93,7 @@ cmd({
         let data = await fetchJson(`${baseUrl}/api/tiktokdl?url=${q}`);
         let buttons = [];
 
-        if (data.data.no_wm) {
+        if (data?.data?.no_wm) {
             buttons.push({
                 name: 'download_no_watermark',
                 buttonParamsJson: JSON.stringify({
@@ -100,7 +103,7 @@ cmd({
             });
         }
 
-        if (data.data.wm) {
+        if (data?.data?.wm) {
             buttons.push({
                 name: 'download_watermark',
                 buttonParamsJson: JSON.stringify({
@@ -110,7 +113,7 @@ cmd({
             });
         }
 
-        if (data.data.audio) {
+        if (data?.data?.audio) {
             buttons.push({
                 name: 'download_audio',
                 buttonParamsJson: JSON.stringify({
