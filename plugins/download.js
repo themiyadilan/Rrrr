@@ -15,6 +15,18 @@ let baseUrl;
 
 const yourName = sensitiveData.nameSignature;
 
+// Function to send messages with buttons
+async function sendButtonMessage(conn, from, buttons, m, message) {
+    const buttonMessage = {
+        image: message.image || null,
+        caption: message.body,
+        footer: message.footer,
+        buttons: buttons,
+        headerType: 4
+    };
+    await conn.sendMessage(from, buttonMessage, { quoted: m });
+}
+
 // Command for downloading Facebook videos
 cmd({
     pattern: "fb",
@@ -54,7 +66,7 @@ cmd({
                 footer: config.FOOTER,
                 body: `*Downloading... 📥*\n\nChoose your option:`
             };
-            return conn.sendButtonMessage(from, buttons, m, message);
+            return sendButtonMessage(conn, from, buttons, m, message);
         } else {
             return reply(`No downloadable video found.`);
         }
@@ -113,7 +125,7 @@ cmd({
                 footer: config.FOOTER,
                 body: `*Downloading... 📥*\n\nChoose your option:`
             };
-            return conn.sendButtonMessage(from, buttons, m, message);
+            return sendButtonMessage(conn, from, buttons, m, message);
         } else {
             return reply(`No downloadable content found.`);
         }
