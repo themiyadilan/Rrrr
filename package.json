@@ -17,6 +17,7 @@
     "nodemailer":"6.9.15",
     "util": "^0.12.4",
     "node-emoji":"2.1.3",
+    "stream":"0.0.3",
     "express": "latest",
     "mega":"latest",
     "axios": "^1.2.5",
