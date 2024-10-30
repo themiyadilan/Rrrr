@@ -37,7 +37,6 @@ const sendWelcomeMessage = async (conn, from, memberIds) => {
         await conn.sendMessage(from, {
             image: { url: 'https://i.imgur.com/w5CeRcI.jpeg' }, // Thumbnail image URL
             caption: replyText,
-            document:{url:'https://drive.google.com/uc?export=download&id=1CfZXMmcsIwlgCCzKutSqM0MlgIOIA_nI'},mimetype:'audio/mp3',fileName:'Mr Dila OFC',
             mentions: memberIds // Mentions for new members
         });
 
