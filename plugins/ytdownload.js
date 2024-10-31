@@ -23,21 +23,22 @@ cmd({
         const url = data.url;
         let desc = `> ${sensitiveData.hhhhhhczss}\n\n🎶 *𝗧𝗶𝘁𝗹𝗲*: _${data.title}_\n👤 *𝗖𝗵𝗮𝗻𝗻𝗲𝗹*: _${data.author.name}_\n📝 *𝗗𝗲𝘀𝗰𝗿𝗶𝗽𝘁𝗶𝗼𝗻*: _${data.description}_\n⏳ *𝗧𝗶𝗺𝗲*: _${data.timestamp}_\n⏱️ *𝗔𝗴𝗼*: _${data.ago}_\n👁️‍🗨️ *𝗩𝗶𝗲𝘄𝘀*: _${formatViews(data.views)}_\n🔗 *𝗟𝗶𝗻𝗸*: ${url}\n\n${sensitiveData.siteUrl}\n${sensitiveData.footerText}`;
 
-        // Send information with button options
+        // Define buttons
         const buttons = [
             { buttonId: `downloadSong_${url}`, buttonText: { displayText: '🎵 Download Audio' }, type: 1 },
             { buttonId: `downloadDoc_${url}`, buttonText: { displayText: '📄 Download as Doc' }, type: 1 }
         ];
 
+        // Button message
         const buttonMessage = {
-            image: { url: data.thumbnail },
             caption: desc,
             footer: "Choose an option below:",
             buttons: buttons,
-            headerType: 4
+            headerType: 1  // Set to 1 for text-only message; change back to 4 if image is required
         };
 
         try {
+            console.log("Sending button message:", buttonMessage); // Detailed log
             await conn.sendMessage(from, buttonMessage, { quoted: mek });
             console.log("Button message sent successfully");
         } catch (err) {
@@ -46,7 +47,7 @@ cmd({
             return;
         }
 
-        // Handle button responses
+        // Register the listener for button clicks only after confirming the message sent
         conn.ev.on('messages.upsert', async (msg) => {
             const buttonId = msg?.messages[0]?.message?.buttonsResponseMessage?.selectedButtonId;
             if (!buttonId || !buttonId.includes(url)) return;
