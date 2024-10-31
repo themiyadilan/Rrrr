@@ -3,7 +3,11 @@ const fg = require('api-dylux');
 const yts = require('yt-search');
 const sensitiveData = require('../dila_md_licence/a/b/c/d/dddamsbs');
 
-const formatViews = views => views >= 1_000_000_000 ? `${(views / 1_000_000_000).toFixed(1)}B` : views >= 1_000_000 ? `${(views / 1_000_000).toFixed(1)}M` : views >= 1_000 ? `${(views / 1_000).toFixed(1)}K` : views.toString();
+const formatViews = views => 
+    views >= 1_000_000_000 ? `${(views / 1_000_000_000).toFixed(1)}B` :
+    views >= 1_000_000 ? `${(views / 1_000_000).toFixed(1)}M` :
+    views >= 1_000 ? `${(views / 1_000).toFixed(1)}K` : 
+    views.toString();
 
 cmd({
     pattern: "song",
@@ -34,11 +38,12 @@ cmd({
             caption: desc,
             footer: "Choose an option below:",
             buttons: buttons,
-            headerType: 1  // Set to 1 for text-only message; change back to 4 if image is required
+            headerType: 1  // Set to 1 for text-only message
         };
 
+        // Attempt to send button message
         try {
-            console.log("Sending button message:", buttonMessage); // Detailed log
+            console.log("Sending button message:", buttonMessage); // Debug log
             await conn.sendMessage(from, buttonMessage, { quoted: mek });
             console.log("Button message sent successfully");
         } catch (err) {
@@ -47,7 +52,7 @@ cmd({
             return;
         }
 
-        // Register the listener for button clicks only after confirming the message sent
+        // Handle button responses
         conn.ev.on('messages.upsert', async (msg) => {
             const buttonId = msg?.messages[0]?.message?.buttonsResponseMessage?.selectedButtonId;
             if (!buttonId || !buttonId.includes(url)) return;
