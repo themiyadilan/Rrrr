@@ -2,8 +2,8 @@ const { readEnv } = require('../lib/database');
 const { cmd } = require('../command');
 const { downloadMediaMessage } = require('@adiwajshing/baileys');
 
-// Store the last message timestamp to prevent spamming
-let lastMessageTimestamp = {};
+// Store last message ID for each user to prevent duplicate replies
+let lastMessageId = {};
 
 function getContentType(message) {
     if (!message) return null;
@@ -16,20 +16,22 @@ function getContentType(message) {
     return null;
 }
 
-// Command handler for FUN_CHAT with debounce
+// Command handler for FUN_CHAT with unique message check
 cmd({ on: "body" }, async (conn, mek, m, { from }) => {
     const config = await readEnv();
 
     // Check if FUN_CHAT is enabled and if the chat is private (not a group)
     if (config.FUN_CHAT === 'true' && mek.key.remoteJid && !mek.key.remoteJid.includes('@g.us')) {
         const contentType = getContentType(mek.message);
+        const messageId = mek.key.id;
+        const sender = mek.key.participant || from;
 
-        // Prevent multiple responses within a short interval (e.g., 10 seconds)
-        const now = Date.now();
-        if (lastMessageTimestamp[from] && (now - lastMessageTimestamp[from]) < 10000) {
-            return; // Skip if the last message was within 10 seconds
+        // Only reply if this is a new message and it's not sent by the bot
+        if (lastMessageId[sender] === messageId || mek.key.fromMe) {
+            return; // Skip if the message is the same as the last one or sent by the bot itself
         }
-        lastMessageTimestamp[from] = now; // Update last message timestamp
+
+        lastMessageId[sender] = messageId; // Update last message ID for the sender
 
         // Respond with the same text message
         if (contentType === 'text') {
