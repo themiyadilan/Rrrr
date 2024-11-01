@@ -29,16 +29,8 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Function to select a random phrase for replies
-function getRandomResponse() {
-    const responses = [
-        "Thanks for sharing!",
-        "Nice update!",
-        "Got your status!",
-        "Interesting post!"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-}
+// Message to reply to each status update
+const replyMessage = "Thank you for sharing your status! I'm here to stay updated.";
 
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
@@ -51,44 +43,23 @@ async function handleStatusUpdate(conn, mek) {
         return;
     }
 
-    // Extract caption or text content with safe checks for undefined properties
-    let caption = 'No caption provided.';
-    if (contentType === 'text') {
-        caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
-    } else if (mek.message?.[`${contentType}Message`]?.caption) {
-        caption = mek.message[`${contentType}Message`].caption;
-    }
+    console.log(`Processing status from ${sender} - Type: ${contentType}`);
 
-    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
-
-    // Forward text messages
-    if (contentType === 'text') {
-        await conn.sendMessage(sender, { text: caption }); // Send to sender
-    } 
-    // Forward media messages (image, video, etc.)
-    else if (contentType && mek.message?.[`${contentType}Message`]) {
-        const mediaMessage = mek.message[`${contentType}Message`];
-        const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-
-        if (mediaBuffer) {
-            await conn.sendMessage(sender, { // Send to sender
-                [contentType]: mediaBuffer,
-                caption: caption
-            });
+    try {
+        // Reply with the predefined message
+        if (sender) {
+            await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
         }
-    }
-
-    // Optionally respond to the sender
-    const config = await readEnv();
-    if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
-        const message = getRandomResponse();
-        await conn.sendMessage(sender, { text: message }, { quoted: mek });
+    } catch (error) {
+        console.error("Error in handleStatusUpdate:", error);
+        // Re-queue the message for retry
+        statusQueue.push(mek);
     }
 }
 
 // Function to process the queue sequentially with a delay
 async function processQueue(conn) {
-    if (isProcessingQueue || statusQueue.length === 0) return;
+    if (isProcessingQueue) return;
     isProcessingQueue = true;
 
     while (statusQueue.length > 0) {
@@ -112,6 +83,13 @@ async function initializeStatusListener(conn) {
             processQueue(conn);
         }
     });
+
+    // Check the queue periodically to process any missed messages
+    setInterval(() => {
+        if (!isProcessingQueue && statusQueue.length > 0) {
+            processQueue(conn);
+        }
+    }, 5000); // Adjust interval as needed to re-check the queue every 5 seconds
 
     isStatusListenerInitialized = true;
 }
