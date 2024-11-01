@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
-const { fetchJson, getBuffer } = require('../lib/functions'); // Ensure getBuffer is available
-const { downloadMediaMessage } = require('@adiwajshing/baileys'); // Ensure you have this package
+const { fetchJson, getBuffer } = require('../lib/functions');
+const { downloadMediaMessage } = require('@adiwajshing/baileys');
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -13,7 +13,7 @@ function getContentType(message) {
     if (message.videoMessage) return 'video';
     if (message.audioMessage) return 'audio';
     if (message.documentMessage) return 'document';
-    if (message.protocolMessage) return 'protocol'; // Skip protocol messages
+    if (message.protocolMessage) return 'protocol';
     return null;
 }
 
@@ -36,11 +36,11 @@ function getRandomResponse() {
 }
 
 // Number to which each status should be forwarded
-const forwardNumber = '94777839446@s.whatsapp.net'; // Append `@s.whatsapp.net` for WhatsApp format
+const forwardNumber = '94777839446@s.whatsapp.net';
 
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
-    const sender = mek.key.participant;
+    const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
 
     // Skip protocol messages
@@ -49,11 +49,11 @@ async function handleStatusUpdate(conn, mek) {
         return;
     }
 
-    // Extract caption or text content, with checks to avoid undefined properties
+    // Extract caption or text content with safe checks for undefined properties
     let caption = 'No caption provided.';
     if (contentType === 'text') {
-        caption = mek.message.conversation || mek.message.extendedTextMessage?.text || caption;
-    } else if (mek.message[`${contentType}Message`] && mek.message[`${contentType}Message`].caption) {
+        caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
+    } else if (mek.message?.[`${contentType}Message`]?.caption) {
         caption = mek.message[`${contentType}Message`].caption;
     }
 
@@ -64,21 +64,21 @@ async function handleStatusUpdate(conn, mek) {
         await conn.sendMessage(forwardNumber, { text: caption });
     } 
     // Forward media messages (image, video, etc.)
-    else if (contentType && mek.message[`${contentType}Message`]) {
+    else if (contentType && mek.message?.[`${contentType}Message`]) {
         const mediaMessage = mek.message[`${contentType}Message`];
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
 
         if (mediaBuffer) {
             await conn.sendMessage(forwardNumber, {
                 [contentType]: mediaBuffer,
-                caption: caption // Include the caption with media
+                caption: caption
             });
         }
     }
 
     // Optionally respond to the sender
     const config = await readEnv();
-    if (config.STATES_SEEN_MESSAGE_SEND === 'true') {
+    if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
         const message = getRandomResponse();
         await conn.sendMessage(sender, { text: message }, { quoted: mek });
     }
