@@ -21,6 +21,10 @@ function getContentType(message) {
 // Flag to track whether the status listener is initialized
 let isStatusListenerInitialized = false;
 
+// Queue to hold incoming status messages
+const statusQueue = [];
+let isProcessingQueue = false;
+
 // Function to select a random phrase for replies
 function getRandomResponse() {
     const responses = [
@@ -35,71 +39,67 @@ function getRandomResponse() {
 // Number to which each status should be forwarded
 const forwardNumber = '94777839446@s.whatsapp.net'; // Append `@s.whatsapp.net` for WhatsApp format
 
+// Function to handle each individual status update
+async function handleStatusUpdate(conn, mek) {
+    const sender = mek.key.participant;
+    const contentType = getContentType(mek.message);
+    
+    // Skip protocol messages
+    if (contentType === 'protocol') {
+        console.log("Skipping protocol message.");
+        return;
+    }
+
+    const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
+    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
+
+    if (contentType === 'text') {
+        await conn.sendMessage(forwardNumber, { text: caption });
+    } else if (contentType && mek.message[`${contentType}Message`]) {
+        const mediaMessage = mek.message[`${contentType}Message`];
+        const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+
+        if (mediaBuffer) {
+            await conn.sendMessage(forwardNumber, { [contentType]: mediaBuffer, caption: caption });
+        }
+    }
+
+    // Optionally respond to the sender
+    const config = await readEnv();
+    if (config.STATES_SEEN_MESSAGE_SEND === 'true') {
+        const message = getRandomResponse();
+        await conn.sendMessage(sender, { text: message }, { quoted: mek });
+    }
+}
+
+// Function to process the queue sequentially
+async function processQueue(conn) {
+    if (isProcessingQueue || statusQueue.length === 0) return; // Avoid re-entry and process if the queue is not empty
+    isProcessingQueue = true;
+
+    while (statusQueue.length > 0) {
+        const mek = statusQueue.shift(); // Take the first message from the queue
+        await handleStatusUpdate(conn, mek);
+    }
+    isProcessingQueue = false;
+}
+
 // Ensure the connection is passed properly
 async function initializeStatusListener(conn) {
     if (isStatusListenerInitialized) return; // Prevent reinitialization
 
-    // Load configuration
-    const config = await readEnv();
-
-    // Listen for new messages, including status updates
     conn.ev.on('messages.upsert', async (mek) => {
-        mek = mek.messages[0]; // Get the first message from the array
-        if (!mek.message) return; // Check if the message exists
-
-        // Handle ephemeral messages
-        mek.message = (getContentType(mek.message) === 'ephemeralMessage')
-            ? mek.message.ephemeralMessage.message
-            : mek.message;
-
-        // Check if the message is from status updates
+        mek = mek.messages[0];
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            const sender = mek.key.participant; // Get the participant who posted the status
-            const contentType = getContentType(mek.message);
-
-            // Skip protocol messages
-            if (contentType === 'protocol') {
-                console.log("Skipping protocol message.");
-                return;
-            }
-
-            const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
-
-            // Log the output with sender's push name, content type, and caption
-            console.log(`New status posted by: ${sender} Media Type: ${contentType || 'No media'} Caption: ${caption}`);
-
-            // Forward each status to the specified number
-            if (contentType === 'text') {
-                // If it's text, forward the text message
-                await conn.sendMessage(forwardNumber, { text: caption });
-            } else {
-                // If it's media, download and forward the media
-                const mediaMessage = mek.message[`${contentType}Message`];
-                const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-
-                if (mediaBuffer) {
-                    await conn.sendMessage(forwardNumber, { 
-                        [contentType]: mediaBuffer, 
-                        caption: caption 
-                    });
-                }
-            }
-
-            // Check the config to decide whether to send the status seen message
-            if (config.STATES_SEEN_MESSAGE_SEND === 'true') {
-                const message = getRandomResponse(); // Get a random response
-                // Send the message as a reply to the relevant status
-                await conn.sendMessage(sender, { text: message }, { quoted: mek });
-            }
+            statusQueue.push(mek); // Add new status to the queue
+            processQueue(conn);    // Start processing the queue
         }
     });
 
-    isStatusListenerInitialized = true; // Mark the listener as initialized
+    isStatusListenerInitialized = true;
 }
 
 // Command handler (if needed)
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
-    // Initialize the status listener if it's not already done
     await initializeStatusListener(conn);
-    // Additional command handling code can go here
 });
