@@ -35,17 +35,25 @@ cmd({ on: "body" }, async (conn, mek, m, { from }) => {
         lastMessageId[sender] = messageId; // Update last message ID for the sender
 
         // Respond based on the type of content received
-        if (contentType === 'text') {
-            const text = mek.message.conversation || mek.message.extendedTextMessage?.text;
-            await conn.sendMessage(from, { text });
-        } else if (['image', 'video', 'audio', 'document', 'sticker'].includes(contentType)) {
-            const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-            if (mediaBuffer) {
-                await conn.sendMessage(from, { 
-                    [contentType]: mediaBuffer,
-                    caption: mek.message[`${contentType}Message`].caption || '' // Include caption if available
-                });
+        try {
+            if (contentType === 'text') {
+                const text = mek.message.conversation || mek.message.extendedTextMessage?.text;
+                await conn.sendMessage(from, { text });
+            } else if (['image', 'video', 'audio', 'document', 'sticker'].includes(contentType)) {
+                const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+                if (mediaBuffer) {
+                    await conn.sendMessage(from, { 
+                        [contentType]: mediaBuffer,
+                        caption: mek.message[`${contentType}Message`].caption || '' // Include caption if available
+                    });
+                } else {
+                    console.log(`Failed to download media for content type: ${contentType}`);
+                }
+            } else {
+                console.log(`Unsupported content type or no content found: ${contentType}`);
             }
+        } catch (error) {
+            console.error(`Error processing message of type ${contentType}:`, error);
         }
     }
 });
