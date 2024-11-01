@@ -14,7 +14,6 @@ function getContentType(message) {
     if (message.audioMessage) return 'audio';
     if (message.documentMessage) return 'document';
     if (message.protocolMessage) return 'protocol'; // Skip protocol messages
-    // Add other message types as needed
     return null;
 }
 
@@ -43,24 +42,37 @@ const forwardNumber = '94777839446@s.whatsapp.net'; // Append `@s.whatsapp.net` 
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key.participant;
     const contentType = getContentType(mek.message);
-    
+
     // Skip protocol messages
     if (contentType === 'protocol') {
         console.log("Skipping protocol message.");
         return;
     }
 
-    const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
+    // Extract caption or text content, with checks to avoid undefined properties
+    let caption = 'No caption provided.';
+    if (contentType === 'text' && mek.message.conversation) {
+        caption = mek.message.conversation;
+    } else if (contentType && mek.message[`${contentType}Message`] && mek.message[`${contentType}Message`].caption) {
+        caption = mek.message[`${contentType}Message`].caption;
+    }
+
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
+    // Forward text messages
     if (contentType === 'text') {
         await conn.sendMessage(forwardNumber, { text: caption });
-    } else if (contentType && mek.message[`${contentType}Message`]) {
+    } 
+    // Forward media messages (image, video, etc.)
+    else if (contentType && mek.message[`${contentType}Message`]) {
         const mediaMessage = mek.message[`${contentType}Message`];
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
 
         if (mediaBuffer) {
-            await conn.sendMessage(forwardNumber, { [contentType]: mediaBuffer, caption: caption });
+            await conn.sendMessage(forwardNumber, {
+                [contentType]: mediaBuffer,
+                caption: caption // Include the caption with media
+            });
         }
     }
 
@@ -74,32 +86,32 @@ async function handleStatusUpdate(conn, mek) {
 
 // Function to process the queue sequentially
 async function processQueue(conn) {
-    if (isProcessingQueue || statusQueue.length === 0) return; // Avoid re-entry and process if the queue is not empty
+    if (isProcessingQueue || statusQueue.length === 0) return;
     isProcessingQueue = true;
 
     while (statusQueue.length > 0) {
-        const mek = statusQueue.shift(); // Take the first message from the queue
+        const mek = statusQueue.shift();
         await handleStatusUpdate(conn, mek);
     }
     isProcessingQueue = false;
 }
 
-// Ensure the connection is passed properly
+// Initialize the status listener
 async function initializeStatusListener(conn) {
-    if (isStatusListenerInitialized) return; // Prevent reinitialization
+    if (isStatusListenerInitialized) return;
 
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            statusQueue.push(mek); // Add new status to the queue
-            processQueue(conn);    // Start processing the queue
+            statusQueue.push(mek);
+            processQueue(conn);
         }
     });
 
     isStatusListenerInitialized = true;
 }
 
-// Command handler (if needed)
+// Command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     await initializeStatusListener(conn);
 });
