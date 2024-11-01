@@ -13,6 +13,7 @@ function getContentType(message) {
     if (message.videoMessage) return 'video';
     if (message.audioMessage) return 'audio';
     if (message.documentMessage) return 'document';
+    if (message.protocolMessage) return 'protocol'; // Skip protocol messages
     // Add other message types as needed
     return null;
 }
@@ -55,6 +56,13 @@ async function initializeStatusListener(conn) {
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             const sender = mek.key.participant; // Get the participant who posted the status
             const contentType = getContentType(mek.message);
+
+            // Skip protocol messages
+            if (contentType === 'protocol') {
+                console.log("Skipping protocol message.");
+                return;
+            }
+
             const caption = mek.message.conversation || mek.message.caption || 'No caption provided.';
 
             // Log the output with sender's push name, content type, and caption
