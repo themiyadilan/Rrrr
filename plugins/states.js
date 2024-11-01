@@ -48,12 +48,24 @@ async function handleStatusUpdate(conn, mek) {
 
     // Check if someone replied to the bot's status
     if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-        const quotedMessage = mek.message.extendedTextMessage.contextInfo.quotedMessage;
         const quotedStatusId = mek.message.extendedTextMessage.contextInfo.stanzaId;
 
         // If the quoted message is a bot's status, send it back to the replier
         if (botStatuses[quotedStatusId]) {
             console.log(`User ${sender} replied to bot's status. Sending original status back.`);
+            await resendStatus(conn, sender, botStatuses[quotedStatusId]);
+        }
+    }
+
+    // Check if the bot replied to a status posted by someone else
+    if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+        const quotedMessage = mek.message.extendedTextMessage.contextInfo.quotedMessage;
+
+        // Find the original status of the quoted message
+        const quotedStatusId = mek.message.extendedTextMessage.contextInfo.stanzaId;
+
+        if (!mek.key.fromMe && botStatuses[quotedStatusId]) {
+            console.log(`Bot replied to status from ${sender}. Sending original status back.`);
             await resendStatus(conn, sender, botStatuses[quotedStatusId]);
         }
     }
