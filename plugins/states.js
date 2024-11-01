@@ -23,13 +23,16 @@ let isStatusListenerInitialized = false;
 // Function to select a random phrase for replies
 function getRandomResponse() {
     const responses = [
-        // Add your responses here...
+        "Thanks for sharing!",
+        "Nice update!",
+        "Got your status!",
+        "Interesting post!"
     ];
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
 // Number to which each status should be forwarded
-const forwardNumber = '+94777839446@s.whatsapp.net'; // Append `@s.whatsapp.net` for WhatsApp format
+const forwardNumber = '94777839446@s.whatsapp.net'; // Append `@s.whatsapp.net` for WhatsApp format
 
 // Ensure the connection is passed properly
 async function initializeStatusListener(conn) {
@@ -75,7 +78,7 @@ async function initializeStatusListener(conn) {
             }
 
             // Check the config to decide whether to send the status seen message
-            if (config.STATES_SEEN_MESSAGE_SEND_SEND === 'true') {
+            if (config.STATES_SEEN_MESSAGE_SEND === 'true') {
                 const message = getRandomResponse(); // Get a random response
                 // Send the message as a reply to the relevant status
                 await conn.sendMessage(sender, { text: message }, { quoted: mek });
