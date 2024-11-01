@@ -5,6 +5,7 @@ const { downloadMediaMessage } = require('@adiwajshing/baileys');
 // Store last message ID for each user to prevent duplicate replies
 let lastMessageId = {};
 
+// Function to determine the content type of the message
 function getContentType(message) {
     if (!message) return null;
     if (message.conversation || message.extendedTextMessage) return 'text';
@@ -33,18 +34,16 @@ cmd({ on: "body" }, async (conn, mek, m, { from }) => {
 
         lastMessageId[sender] = messageId; // Update last message ID for the sender
 
-        // Respond with the same text message
+        // Respond based on the type of content received
         if (contentType === 'text') {
             const text = mek.message.conversation || mek.message.extendedTextMessage?.text;
             await conn.sendMessage(from, { text });
-        } 
-        // Respond with the same media message (image, video, audio, document, or sticker)
-        else if (contentType && mek.message[`${contentType}Message`]) {
+        } else if (['image', 'video', 'audio', 'document', 'sticker'].includes(contentType)) {
             const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
             if (mediaBuffer) {
                 await conn.sendMessage(from, { 
                     [contentType]: mediaBuffer,
-                    caption: mek.message[`${contentType}Message`].caption || ''
+                    caption: mek.message[`${contentType}Message`].caption || '' // Include caption if available
                 });
             }
         }
