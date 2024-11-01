@@ -24,16 +24,8 @@ let isStatusListenerInitialized = false;
 const statusQueue = [];
 let isProcessingQueue = false;
 
-// Function to select a random phrase for replies
-function getRandomResponse() {
-    const responses = [
-        "Thanks for sharing!",
-        "Nice update!",
-        "Got your status!",
-        "Interesting post!"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-}
+// Storage for bot-posted statuses
+let botStatuses = {};
 
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
@@ -46,31 +38,37 @@ async function handleStatusUpdate(conn, mek) {
         return;
     }
 
-    // Extract caption or text content with safe checks for undefined properties
-    let caption = 'No caption provided.';
-    if (contentType === 'text') {
-        caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
-    } else if (mek.message?.[`${contentType}Message`]?.caption) {
-        caption = mek.message[`${contentType}Message`].caption;
+    // Check if this is a status posted by the bot
+    if (mek.key.fromMe) {
+        // Store the bot's status for future replies
+        botStatuses[mek.key.id] = mek;
+        console.log(`Stored bot status: ${mek.key.id}`);
+        return;
     }
 
-    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
-
-    // Only forward replies to bot's status
+    // Check if someone replied to the bot's status
     if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
         const quotedMessage = mek.message.extendedTextMessage.contextInfo.quotedMessage;
+        const quotedStatusId = mek.message.extendedTextMessage.contextInfo.stanzaId;
 
-        // Check if the quoted message was sent by the bot (replies to bot's status)
-        if (quotedMessage && mek.key.fromMe) {
-            await conn.sendMessage(sender, { text: caption }, { quoted: mek });
+        // If the quoted message is a bot's status, send it back to the replier
+        if (botStatuses[quotedStatusId]) {
+            console.log(`User ${sender} replied to bot's status. Sending original status back.`);
+            await resendStatus(conn, sender, botStatuses[quotedStatusId]);
         }
     }
+}
 
-    // Optionally respond to the sender
-    const config = await readEnv();
-    if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
-        const message = getRandomResponse();
-        await conn.sendMessage(sender, { text: message }, { quoted: mek });
+// Function to resend a stored status
+async function resendStatus(conn, recipient, statusMek) {
+    const contentType = getContentType(statusMek.message);
+    const caption = statusMek.message[`${contentType}Message`]?.caption || 'Here’s the status you replied to.';
+
+    if (contentType === 'text') {
+        await conn.sendMessage(recipient, { text: statusMek.message.conversation });
+    } else if (['image', 'video', 'audio', 'document'].includes(contentType)) {
+        const mediaBuffer = await downloadMediaMessage(statusMek, 'buffer', {}, { logger: console });
+        await conn.sendMessage(recipient, { [contentType]: mediaBuffer, caption });
     }
 }
 
