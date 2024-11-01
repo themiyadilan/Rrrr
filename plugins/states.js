@@ -8,7 +8,7 @@ const { downloadMediaMessage } = require('@adiwajshing/baileys'); // Ensure you 
 // Function to determine the content type of a message
 function getContentType(message) {
     if (!message) return null;
-    if (message.conversation) return 'text';
+    if (message.conversation || message.extendedTextMessage) return 'text';
     if (message.imageMessage) return 'image';
     if (message.videoMessage) return 'video';
     if (message.audioMessage) return 'audio';
@@ -51,9 +51,9 @@ async function handleStatusUpdate(conn, mek) {
 
     // Extract caption or text content, with checks to avoid undefined properties
     let caption = 'No caption provided.';
-    if (contentType === 'text' && mek.message.conversation) {
-        caption = mek.message.conversation;
-    } else if (contentType && mek.message[`${contentType}Message`] && mek.message[`${contentType}Message`].caption) {
+    if (contentType === 'text') {
+        caption = mek.message.conversation || mek.message.extendedTextMessage?.text || caption;
+    } else if (mek.message[`${contentType}Message`] && mek.message[`${contentType}Message`].caption) {
         caption = mek.message[`${contentType}Message`].caption;
     }
 
