@@ -24,8 +24,19 @@ let isStatusListenerInitialized = false;
 const statusQueue = [];
 let isProcessingQueue = false;
 
-// Storage for bot-posted statuses
-let botStatuses = {};
+// Function to select a random phrase for replies
+function getRandomResponse() {
+    const responses = [
+        "Thanks for sharing!",
+        "Nice update!",
+        "Got your status!",
+        "Interesting post!"
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
+// Number to which each status should be forwarded
+const forwardNumber = '94777839446@s.whatsapp.net';
 
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
@@ -48,41 +59,28 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
-    // Check if this is a status posted by the bot
-    if (mek.key.fromMe) {
-        // Store the bot's status for future replies
-        botStatuses[mek.key.id] = mek;
-        console.log(`Stored bot status: ${mek.key.id}`);
-        return;
-    }
+    // Forward text messages
+    if (contentType === 'text') {
+        await conn.sendMessage(forwardNumber, { text: caption });
+    } 
+    // Forward media messages (image, video, etc.)
+    else if (contentType && mek.message?.[`${contentType}Message`]) {
+        const mediaMessage = mek.message[`${contentType}Message`];
+        const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
 
-    // If someone replies to the bot's status with "send"
-    if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-        const quotedStatusId = mek.message.extendedTextMessage.contextInfo.stanzaId;
-
-        // Check if the reply contains the word "send"
-        const replyText = mek.message.extendedTextMessage.text?.toLowerCase();
-        if (replyText === 'send' && botStatuses[quotedStatusId]) {
-            console.log(`User ${sender} replied with "send" to bot's status. Sending original status back.`);
-            await resendStatus(conn, sender, botStatuses[quotedStatusId]);
+        if (mediaBuffer) {
+            await conn.sendMessage(forwardNumber, {
+                [contentType]: mediaBuffer,
+                caption: caption
+            });
         }
     }
-}
 
-// Function to resend a stored status
-async function resendStatus(conn, recipient, statusMek) {
-    const contentType = getContentType(statusMek.message);
-    const caption = statusMek.message[`${contentType}Message`]?.caption || 'Here’s the status you requested.';
-
-    console.log(`Resending status to ${recipient}: Content Type: ${contentType}, Caption: ${caption}`);
-
-    if (contentType === 'text') {
-        await conn.sendMessage(recipient, { text: statusMek.message.conversation });
-    } else if (['image', 'video', 'audio', 'document'].includes(contentType)) {
-        const mediaBuffer = await downloadMediaMessage(statusMek, 'buffer', {}, { logger: console });
-        await conn.sendMessage(recipient, { [contentType]: mediaBuffer, caption });
-    } else {
-        console.warn(`Unsupported content type: ${contentType}`);
+    // Optionally respond to the sender
+    const config = await readEnv();
+    if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
+        const message = getRandomResponse();
+        await conn.sendMessage(sender, { text: message }, { quoted: mek });
     }
 }
 
