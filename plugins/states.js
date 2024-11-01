@@ -35,9 +35,6 @@ function getRandomResponse() {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// Number to which each status should be forwarded
-const forwardNumber = '94777839446@s.whatsapp.net';
-
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
@@ -61,7 +58,7 @@ async function handleStatusUpdate(conn, mek) {
 
     // Forward text messages
     if (contentType === 'text') {
-        await conn.sendMessage(forwardNumber, { text: caption });
+        await conn.sendMessage(sender, { text: caption }); // Send to sender
     } 
     // Forward media messages (image, video, etc.)
     else if (contentType && mek.message?.[`${contentType}Message`]) {
@@ -69,7 +66,7 @@ async function handleStatusUpdate(conn, mek) {
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
 
         if (mediaBuffer) {
-            await conn.sendMessage(forwardNumber, {
+            await conn.sendMessage(sender, { // Send to sender
                 [contentType]: mediaBuffer,
                 caption: caption
             });
