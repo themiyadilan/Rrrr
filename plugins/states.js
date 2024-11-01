@@ -35,9 +35,6 @@ function getRandomResponse() {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// Number to which each status should be forwarded
-const forwardNumber = '94777839446@s.whatsapp.net';
-
 // Function to handle each individual status update
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
@@ -59,20 +56,13 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
-    // Forward text messages
-    if (contentType === 'text') {
-        await conn.sendMessage(forwardNumber, { text: caption });
-    } 
-    // Forward media messages (image, video, etc.)
-    else if (contentType && mek.message?.[`${contentType}Message`]) {
-        const mediaMessage = mek.message[`${contentType}Message`];
-        const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+    // Only forward replies to bot's status
+    if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+        const quotedMessage = mek.message.extendedTextMessage.contextInfo.quotedMessage;
 
-        if (mediaBuffer) {
-            await conn.sendMessage(forwardNumber, {
-                [contentType]: mediaBuffer,
-                caption: caption
-            });
+        // Check if the quoted message was sent by the bot (replies to bot's status)
+        if (quotedMessage && mek.key.fromMe) {
+            await conn.sendMessage(sender, { text: caption }, { quoted: mek });
         }
     }
 
