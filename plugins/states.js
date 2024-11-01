@@ -24,6 +24,11 @@ let isStatusListenerInitialized = false;
 const statusQueue = [];
 let isProcessingQueue = false;
 
+// Function to introduce a delay (in milliseconds)
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Function to select a random phrase for replies
 function getRandomResponse() {
     const responses = [
@@ -81,7 +86,7 @@ async function handleStatusUpdate(conn, mek) {
     }
 }
 
-// Function to process the queue sequentially
+// Function to process the queue sequentially with a delay
 async function processQueue(conn) {
     if (isProcessingQueue || statusQueue.length === 0) return;
     isProcessingQueue = true;
@@ -89,6 +94,9 @@ async function processQueue(conn) {
     while (statusQueue.length > 0) {
         const mek = statusQueue.shift();
         await handleStatusUpdate(conn, mek);
+
+        // Introduce a delay after each message handling
+        await delay(1000); // Adjust delay time (1000 ms = 1 second) as needed
     }
     isProcessingQueue = false;
 }
