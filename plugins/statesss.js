@@ -5,7 +5,7 @@ const { cmd } = require('../command');
 const { downloadMediaMessage } = require('@adiwajshing/baileys');
 
 // Constants
-const STORAGE_DIR = '../data/states';
+const STORAGE_DIR = './states';
 const STATUS_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 const replyMessage = "Thank you for sharing your status!";
 
