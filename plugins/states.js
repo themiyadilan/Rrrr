@@ -2,16 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { cmd, commands } = require('../command');
 const { fetchJson, getBuffer } = require('../lib/functions');
-const { downloadMediaMessage } = require('@adiwajshing/baileys');
 
 // Function to determine the content type of a message
 function getContentType(message) {
     if (!message) return null;
     if (message.conversation || message.extendedTextMessage) return 'text';
-    if (message.imageMessage) return 'image';
-    if (message.videoMessage) return 'video';
-    if (message.audioMessage) return 'audio';
-    if (message.documentMessage) return 'document';
     if (message.protocolMessage) return 'protocol';
     return null;
 }
@@ -61,8 +56,6 @@ async function handleMessageUpdate(conn, mek) {
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
-    } else if (mek.message?.[`${contentType}Message`]?.caption) {
-        caption = mek.message[`${contentType}Message`].caption;
     }
 
     console.log(`Processing message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
@@ -80,18 +73,6 @@ async function handleMessageUpdate(conn, mek) {
         // Forward text messages
         if (contentType === 'text') {
             await conn.sendMessage(sender, { text: caption }); // Send to sender
-        } 
-        // Forward media messages (image, video, etc.)
-        else if (contentType && mek.message?.[`${contentType}Message`]) {
-            const mediaMessage = mek.message[`${contentType}Message`];
-            const mediaBuffer = await downloadMediaMessage(conn, mek, 'buffer', { logger: console });
-
-            if (mediaBuffer) {
-                await conn.sendMessage(sender, { // Send to sender
-                    [contentType]: mediaBuffer,
-                    caption: caption
-                });
-            }
         }
     } catch (error) {
         console.error("Error in handleMessageUpdate:", error);
