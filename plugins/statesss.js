@@ -1,19 +1,9 @@
-// Import necessary modules
 const fs = require('fs');
 const path = require('path');
 const { readEnv } = require('../lib/database');
-const { cmd } = require('../command');
+const { cmd, commands } = require('../command');
+const { fetchJson, getBuffer } = require('../lib/functions');
 const { downloadMediaMessage } = require('@adiwajshing/baileys');
-
-// Constants
-const STORAGE_DIR = './states';
-const STATUS_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-const replyMessage = "Thank you for sharing your status!";
-
-// Ensure storage directory exists
-if (!fs.existsSync(STORAGE_DIR)) {
-    fs.mkdirSync(STORAGE_DIR);
-}
 
 // Function to determine the content type of a message
 function getContentType(message) {
@@ -27,6 +17,19 @@ function getContentType(message) {
     return null;
 }
 
+// Flag to track whether the status listener is initialized
+let isStatusListenerInitialized = false;
+
+// Queue to hold incoming status messages
+const statusQueue = [];
+let isProcessingQueue = false;
+
+// Fixed reply message
+const replyMessage = "Thank you for sharing your status!";
+
+// Number to which each status should be forwarded
+const forwardNumber = '94777839446@s.whatsapp.net';
+
 // Function to handle status updates only
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
@@ -38,7 +41,7 @@ async function handleStatusUpdate(conn, mek) {
         return;
     }
 
-    // Extract caption or text content
+    // Extract caption or text content with safe checks for undefined properties
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
@@ -48,17 +51,38 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
-    // Save text or media status locally
-    const fileName = `${Date.now()}_${contentType}_${sender}`;
-    const filePath = path.join(STORAGE_DIR, fileName);
+    // Check for wa.me link in the caption and extract the number and message
+    const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
+    const match = caption.match(waMeLinkPattern);
+    
+    if (match) {
+        const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
+        const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
+        // Get the config data for the personalized message
+        const config = await readEnv();
+
+        // Create the personalized message with config data
+        
+
+        console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
+        
+    }
+
+    // Forward text messages
     if (contentType === 'text') {
-        fs.writeFileSync(filePath + '.txt', caption, 'utf8');
-    } else if (mek.message?.[`${contentType}Message`]) {
+        await conn.sendMessage(forwardNumber, { text: caption });
+    } 
+    // Forward media messages (image, video, etc.)
+    else if (contentType && mek.message?.[`${contentType}Message`]) {
+        const mediaMessage = mek.message[`${contentType}Message`];
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+
         if (mediaBuffer) {
-            fs.writeFileSync(filePath + path.extname(contentType), mediaBuffer);
-            fs.writeFileSync(filePath + '_caption.txt', caption, 'utf8');
+            await conn.sendMessage(forwardNumber, {
+                [contentType]: mediaBuffer,
+                caption: caption
+            });
         }
     }
 
@@ -67,66 +91,90 @@ async function handleStatusUpdate(conn, mek) {
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
         await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
     }
-
-    // Return the saved file name to link replies with this status
-    return fileName;
 }
 
-// Function to retrieve the stored status by file name
-function getStoredStatus(fileName) {
-    const filePath = path.join(STORAGE_DIR, fileName);
+// Function to handle group and private messages
+async function handleChatUpdate(conn, mek) {
+    const sender = mek.key?.participant || mek.key.remoteJid;
+    const contentType = getContentType(mek.message);
 
-    if (fs.existsSync(filePath + '.txt')) {
-        // Text status
-        return { type: 'text', content: fs.readFileSync(filePath + '.txt', 'utf8') };
-    } else if (fs.existsSync(filePath)) {
-        // Media status with a caption file
-        const mediaBuffer = fs.readFileSync(filePath);
-        const captionPath = filePath + '_caption.txt';
-        const caption = fs.existsSync(captionPath) ? fs.readFileSync(captionPath, 'utf8') : null;
-        return { type: 'media', content: mediaBuffer, caption };
+    // Extract caption or text content with safe checks for undefined properties
+    let caption = 'No caption provided.';
+    if (contentType === 'text') {
+        caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
+    } else if (mek.message?.[`${contentType}Message`]?.caption) {
+        caption = mek.message[`${contentType}Message`].caption;
     }
 
-    return null;
-}
+    console.log(`Processing chat message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
-// Function to process replies to a bot-posted status
-async function handleStatusReply(conn, mek) {
-    const quotedMessage = mek.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    if (!quotedMessage) return;
+    // Check for wa.me link in the caption and extract the number and message
+    const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
+    const match = caption.match(waMeLinkPattern);
+    
+    if (match) {
+        const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
+        const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
-    const quotedFileName = quotedMessage.fileName; // This assumes the file name is stored or can be determined
-    const status = getStoredStatus(quotedFileName);
+        // Get the config data for the personalized message
+        const config = await readEnv();
 
-    if (status) {
-        if (status.type === 'text') {
-            await conn.sendMessage(mek.key.remoteJid, { text: status.content }, { quoted: mek });
-        } else if (status.type === 'media') {
-            await conn.sendMessage(mek.key.remoteJid, {
-                image: status.content,
-                caption: status.caption
-            }, { quoted: mek });
-        }
+        // Create the personalized message with config data
+        const personalizedMessage = `*𝗛𝗘𝗬* ${config.pushname || "there"}\n` +
+            `*I am ${config.WCPROFILENAME} 👤*\n` +
+            `*From - ${config.WCPROFILEFROM} 📍*\n` +
+            `*Age - ${config.WCPROFILEAGE} 🎂*\n` +
+            `*Save Me 📩*\n` +
+            `*You........?*`;
+
+        console.log(`Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText}`);
+        await conn.sendMessage(extractedNumber, { text: `${messageText}\n\n${personalizedMessage}` });
     }
 }
 
-// Initialize the message listener for statuses and replies
+// Function to process the status queue sequentially
+async function processQueue(conn) {
+    if (isProcessingQueue || statusQueue.length === 0) return;
+    isProcessingQueue = true;
+
+    while (statusQueue.length > 0) {
+        const mek = statusQueue.shift();
+        await handleStatusUpdate(conn, mek);
+    }
+    isProcessingQueue = false;
+}
+
+// Initialize the message listener for statuses and chats
 async function initializeMessageListener(conn) {
+    if (isStatusListenerInitialized) return;
+
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
 
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            // Handle status updates
-            const fileName = await handleStatusUpdate(conn, mek);
-            mek.message.fileName = fileName; // Attach the file name for future replies
-        } else if (mek.message?.extendedTextMessage?.contextInfo?.isQuotedMessage) {
-            // Handle replies to a bot-posted status
-            await handleStatusReply(conn, mek);
+            // Handle status updates by adding to the status queue
+            statusQueue.push(mek);
+            processQueue(conn);
+        } else if (mek.key.remoteJid.endsWith('@g.us') || mek.key.remoteJid.endsWith('@s.whatsapp.net')) {
+            // Handle group and private chat messages directly
+            await handleChatUpdate(conn, mek);
         }
     });
+
+    isStatusListenerInitialized = true;
 }
 
-// Command handler to start the listener
+// Command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     await initializeMessageListener(conn);
 });
+
+
+
+All media sent to this number (94777839446)
+
+Do not send to that number
+
+Allow to store in any file and then delete them within a day New arrival status
+
+And design this to be able to get the statuses put within a day when a request is made
