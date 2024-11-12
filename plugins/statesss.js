@@ -24,16 +24,8 @@ let isStatusListenerInitialized = false;
 const statusQueue = [];
 let isProcessingQueue = false;
 
-// Function to select a random phrase for replies
-function getRandomResponse() {
-    const responses = [
-        "Thanks for sharing!",
-        "Nice update!",
-        "Got your status!",
-        "Interesting post!"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-}
+// Fixed reply message
+const replyMessage = "Thank you for sharing your status!";
 
 // Number to which each status should be forwarded
 const forwardNumber = '94777839446@s.whatsapp.net';
@@ -79,8 +71,7 @@ async function handleStatusUpdate(conn, mek) {
     // Optionally respond to the sender
     const config = await readEnv();
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
-        const message = getRandomResponse();
-        await conn.sendMessage(sender, { text: message }, { quoted: mek });
+        await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
     }
 }
 
