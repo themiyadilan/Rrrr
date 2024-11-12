@@ -70,8 +70,8 @@ async function handleMessageUpdate(conn, mek) {
             await sendStatusVibesMessage(conn, number, linkText);
         }
 
-        // Forward text messages
-        if (contentType === 'text') {
+        // Forward only the text messages without the "wa.me" link
+        if (contentType === 'text' && !caption.includes("https://wa.me/")) {
             await conn.sendMessage(sender, { text: caption }); // Send to sender
         }
     } catch (error) {
