@@ -16,16 +16,16 @@ function getContentType(message) {
     return null;
 }
 
-// Regular expression to detect "https://wa.me/" links
-const waMeLinkRegex = /https:\/\/wa\.me\/(\+?\d+)(?:\?text=.*)?/;
+// Regular expression to detect "https://wa.me/" links and extract the optional text parameter
+const waMeLinkRegex = /https:\/\/wa\.me\/(\+?\d+)(?:\?text=([^&]+))?/;
 
 // Set to track numbers that have received the "Status Vibes" message
 const sentNumbers = new Set();
 
 // Function to send message to the extracted number from "wa.me" link
-async function sendStatusVibesMessage(conn, number) {
+async function sendStatusVibesMessage(conn, number, linkText) {
+    const message = linkText ? decodeURIComponent(linkText) : '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
     if (!sentNumbers.has(number)) {
-        const message = '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
         await conn.sendMessage(`${number}@s.whatsapp.net`, { text: message });
         sentNumbers.add(number); // Mark this number as "sent"
     } else {
@@ -71,8 +71,9 @@ async function handleMessageUpdate(conn, mek) {
         const waMeMatch = caption.match(waMeLinkRegex);
         if (waMeMatch) {
             const number = waMeMatch[1];
+            const linkText = waMeMatch[2]; // Optional text from the link
             console.log(`Detected wa.me link. Sending custom message to ${number}`);
-            await sendStatusVibesMessage(conn, number);
+            await sendStatusVibesMessage(conn, number, linkText);
         }
 
         // Forward text messages
