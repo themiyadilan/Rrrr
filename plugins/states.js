@@ -49,8 +49,8 @@ function getRandomResponse() {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// Function to handle each individual status update
-async function handleStatusUpdate(conn, mek) {
+// Function to handle each individual status or chat update
+async function handleMessageUpdate(conn, mek) {
     const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
 
@@ -68,7 +68,7 @@ async function handleStatusUpdate(conn, mek) {
         caption = mek.message[`${contentType}Message`].caption;
     }
 
-    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
+    console.log(`Processing message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
     try {
         // Check for "https://wa.me/" link and send custom message if found
@@ -103,7 +103,7 @@ async function handleStatusUpdate(conn, mek) {
             await conn.sendMessage(sender, { text: message }, { quoted: mek });
         }
     } catch (error) {
-        console.error("Error in handleStatusUpdate:", error);
+        console.error("Error in handleMessageUpdate:", error);
         // Re-queue the message for retry
         statusQueue.push(mek);
     }
@@ -116,7 +116,7 @@ async function processQueue(conn) {
 
     while (statusQueue.length > 0) {
         const mek = statusQueue.shift();
-        await handleStatusUpdate(conn, mek);
+        await handleMessageUpdate(conn, mek);
 
         // Introduce a delay after each message handling
         await delay(1000); // Adjust delay time (1000 ms = 1 second) as needed
@@ -124,13 +124,15 @@ async function processQueue(conn) {
     isProcessingQueue = false;
 }
 
-// Initialize the status listener
-async function initializeStatusListener(conn) {
+// Initialize the message listener
+async function initializeMessageListener(conn) {
     if (isStatusListenerInitialized) return;
 
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
-        if (mek.key && mek.key.remoteJid === 'status@broadcast') {
+        const from = mek.key.remoteJid;
+
+        if (from === 'status@broadcast' || mek.key.fromMe || mek.message) {
             statusQueue.push(mek);
             processQueue(conn);
         }
@@ -148,5 +150,5 @@ async function initializeStatusListener(conn) {
 
 // Command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
-    await initializeStatusListener(conn);
+    await initializeMessageListener(conn);
 });
