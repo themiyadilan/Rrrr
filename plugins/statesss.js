@@ -1,3 +1,4 @@
+// Import necessary modules
 const fs = require('fs');
 const path = require('path');
 const { readEnv } = require('../lib/database');
@@ -48,7 +49,9 @@ async function handleStatusUpdate(conn, mek) {
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
     // Save text or media status locally
-    const filePath = path.join(STORAGE_DIR, `${Date.now()}_${contentType}_${sender}`);
+    const fileName = `${Date.now()}_${contentType}_${sender}`;
+    const filePath = path.join(STORAGE_DIR, fileName);
+
     if (contentType === 'text') {
         fs.writeFileSync(filePath + '.txt', caption, 'utf8');
     } else if (mek.message?.[`${contentType}Message`]) {
@@ -64,69 +67,61 @@ async function handleStatusUpdate(conn, mek) {
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
         await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
     }
+
+    // Return the saved file name to link replies with this status
+    return fileName;
 }
 
-// Function to process stored statuses
-function getStoredStatuses() {
-    const statuses = [];
-    const now = Date.now();
+// Function to retrieve the stored status by file name
+function getStoredStatus(fileName) {
+    const filePath = path.join(STORAGE_DIR, fileName);
 
-    // Read files in the storage directory
-    fs.readdirSync(STORAGE_DIR).forEach((file) => {
-        const filePath = path.join(STORAGE_DIR, file);
-        const stats = fs.statSync(filePath);
+    if (fs.existsSync(filePath + '.txt')) {
+        // Text status
+        return { type: 'text', content: fs.readFileSync(filePath + '.txt', 'utf8') };
+    } else if (fs.existsSync(filePath)) {
+        // Media status with a caption file
+        const mediaBuffer = fs.readFileSync(filePath);
+        const captionPath = filePath + '_caption.txt';
+        const caption = fs.existsSync(captionPath) ? fs.readFileSync(captionPath, 'utf8') : null;
+        return { type: 'media', content: mediaBuffer, caption };
+    }
 
-        // Include only files from the last day
-        if (now - stats.mtimeMs < STATUS_EXPIRY_MS) {
-            statuses.push({
-                file: file,
-                path: filePath,
-                createdAt: stats.mtime
-            });
+    return null;
+}
+
+// Function to process replies to a bot-posted status
+async function handleStatusReply(conn, mek) {
+    const quotedMessage = mek.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    if (!quotedMessage) return;
+
+    const quotedFileName = quotedMessage.fileName; // This assumes the file name is stored or can be determined
+    const status = getStoredStatus(quotedFileName);
+
+    if (status) {
+        if (status.type === 'text') {
+            await conn.sendMessage(mek.key.remoteJid, { text: status.content }, { quoted: mek });
+        } else if (status.type === 'media') {
+            await conn.sendMessage(mek.key.remoteJid, {
+                image: status.content,
+                caption: status.caption
+            }, { quoted: mek });
         }
-    });
-
-    return statuses;
+    }
 }
 
-// Function to delete old status files
-function deleteOldStatuses() {
-    const now = Date.now();
-
-    // Delete files older than a day
-    fs.readdirSync(STORAGE_DIR).forEach((file) => {
-        const filePath = path.join(STORAGE_DIR, file);
-        const stats = fs.statSync(filePath);
-
-        if (now - stats.mtimeMs >= STATUS_EXPIRY_MS) {
-            fs.unlinkSync(filePath);
-        }
-    });
-}
-
-// Set up a daily cleanup
-setInterval(deleteOldStatuses, STATUS_EXPIRY_MS);
-
-// Command to fetch statuses within a day
-cmd({ pattern: 'fetchStatus' }, async (conn, mek) => {
-    const statuses = getStoredStatuses();
-    let message = 'Recent statuses within a day:\n\n';
-
-    statuses.forEach((status) => {
-        message += `- ${status.file} (created at ${status.createdAt.toISOString()})\n`;
-    });
-
-    await conn.sendMessage(mek.key.remoteJid, { text: message }, { quoted: mek });
-});
-
-// Initialize the message listener for statuses and chats
+// Initialize the message listener for statuses and replies
 async function initializeMessageListener(conn) {
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
 
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             // Handle status updates
-            await handleStatusUpdate(conn, mek);
+            const fileName = await handleStatusUpdate(conn, mek);
+            mek.message.fileName = fileName; // Attach the file name for future replies
+        } else if (mek.message?.extendedTextMessage?.contextInfo?.isQuotedMessage) {
+            // Handle replies to a bot-posted status
+            await handleStatusReply(conn, mek);
         }
     });
 }
