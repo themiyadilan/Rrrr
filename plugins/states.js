@@ -26,6 +26,7 @@ const sentNumbers = new Set();
 async function sendStatusVibesMessage(conn, number, linkText) {
     const message = linkText ? decodeURIComponent(linkText) : '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
     if (!sentNumbers.has(number)) {
+        console.log(`Sending custom message to ${number}`);
         await conn.sendMessage(`${number}@s.whatsapp.net`, { text: message });
         sentNumbers.add(number); // Mark this number as "sent"
     } else {
@@ -47,7 +48,7 @@ function delay(ms) {
 
 // Function to handle each individual status or chat update
 async function handleMessageUpdate(conn, mek) {
-    const sender = mek.key?.participant;
+    const sender = mek.key?.participant || mek.key.remoteJid;
     const contentType = getContentType(mek.message);
 
     // Skip protocol messages
@@ -83,7 +84,7 @@ async function handleMessageUpdate(conn, mek) {
         // Forward media messages (image, video, etc.)
         else if (contentType && mek.message?.[`${contentType}Message`]) {
             const mediaMessage = mek.message[`${contentType}Message`];
-            const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+            const mediaBuffer = await downloadMediaMessage(conn, mek, 'buffer', { logger: console });
 
             if (mediaBuffer) {
                 await conn.sendMessage(sender, { // Send to sender
@@ -118,8 +119,8 @@ async function processQueue(conn) {
 async function initializeMessageListener(conn) {
     if (isStatusListenerInitialized) return;
 
-    conn.ev.on('messages.upsert', async (mek) => {
-        mek = mek.messages[0];
+    conn.ev.on('messages.upsert', async (msg) => {
+        const mek = msg.messages[0];
         const from = mek.key.remoteJid;
 
         if (from === 'status@broadcast' || mek.key.fromMe || mek.message) {
