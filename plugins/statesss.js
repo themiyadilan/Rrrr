@@ -63,15 +63,10 @@ async function handleStatusUpdate(conn, mek) {
         const config = await readEnv();
 
         // Create the personalized message with config data
-        const personalizedMessage = `*𝗛𝗘𝗬* ${config.pushname || "there"}\n` +
-            `*I am ${config.WCPROFILENAME} 👤*\n` +
-            `*From - ${config.WCPROFILEFROM} 📍*\n` +
-            `*Age - ${config.WCPROFILEAGE} 🎂*\n` +
-            `*Save Me 📩*\n` +
-            `*You........?*`;
+        
 
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
-        await conn.sendMessage(extractedNumber, { text: `${messageText}\n\n${personalizedMessage}` });
+        
     }
 
     // Forward text messages
@@ -129,7 +124,7 @@ async function handleChatUpdate(conn, mek) {
             `*I am ${config.WCPROFILENAME} 👤*\n` +
             `*From - ${config.WCPROFILEFROM} 📍*\n` +
             `*Age - ${config.WCPROFILEAGE} 🎂*\n` +
-            `*Save Me ❤️📩*\n` +
+            `*Save Me 📩*\n` +
             `*You........?*`;
 
         console.log(`Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText}`);
