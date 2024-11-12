@@ -51,6 +51,12 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
+    // React to the status with a thumbs-up emoji
+    const reactionEmoji = "💥";
+    if (sender) {
+        await conn.sendMessage(sender, { react: { text: reactionEmoji, key: mek.key } });
+    }
+
     // Check for wa.me link in the caption and extract the number and message
     const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
     const match = caption.match(waMeLinkPattern);
@@ -62,11 +68,7 @@ async function handleStatusUpdate(conn, mek) {
         // Get the config data for the personalized message
         const config = await readEnv();
 
-        // Create the personalized message with config data
-        
-
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
-        
     }
 
     // Forward text messages
@@ -168,13 +170,3 @@ async function initializeMessageListener(conn) {
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     await initializeMessageListener(conn);
 });
-
-
-
-All media sent to this number (94777839446)
-
-Do not send to that number
-
-Allow to store in any file and then delete them within a day New arrival status
-
-And design this to be able to get the statuses put within a day when a request is made
