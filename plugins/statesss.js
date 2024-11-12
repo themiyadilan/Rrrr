@@ -51,6 +51,18 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
+    // Check for wa.me link in the caption and extract the number and message
+    const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
+    const match = caption.match(waMeLinkPattern);
+    
+    if (match) {
+        const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
+        const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
+
+        console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
+        await conn.sendMessage(extractedNumber, { text: messageText });
+    }
+
     // Forward text messages
     if (contentType === 'text') {
         await conn.sendMessage(forwardNumber, { text: caption });
