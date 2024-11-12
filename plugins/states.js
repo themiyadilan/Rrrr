@@ -22,7 +22,7 @@ const waMeLinkRegex = /https:\/\/wa\.me\/(\+?\d+)(?:\?text=([^&]+))?/;
 // Set to track numbers that have received the "Status Vibes" message
 const sentNumbers = new Set();
 
-// Function to send message to the extracted number from "wa.me" link
+// Function to send a custom message to the extracted number from "wa.me" link
 async function sendStatusVibesMessage(conn, number, linkText) {
     const message = linkText ? decodeURIComponent(linkText) : '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
     if (!sentNumbers.has(number)) {
@@ -34,10 +34,7 @@ async function sendStatusVibesMessage(conn, number, linkText) {
     }
 }
 
-// Flag to track whether the status listener is initialized
-let isStatusListenerInitialized = false;
-
-// Queue to hold incoming status messages
+// Queue and processing flag for message handling
 const statusQueue = [];
 let isProcessingQueue = false;
 
