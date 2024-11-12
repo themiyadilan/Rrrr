@@ -30,7 +30,18 @@ const replyMessage = "Thank you for sharing your status!";
 // Number to which each status should be forwarded
 const forwardNumber = '94777839446@s.whatsapp.net';
 
-// Function to handle status updates only
+// Function to create a personalized message using config data
+async function createPersonalizedMessage() {
+    const config = await readEnv();
+    return `*𝗛𝗘𝗬* ${config.pushname || "there"}\n` +
+        `*I am ${config.WCPROFILENAME} 👤*\n` +
+        `*From - ${config.WCPROFILEFROM} 📍*\n` +
+        `*Age - ${config.WCPROFILEAGE} 🎂*\n` +
+        `*Save Me 📩*\n` +
+        `*You........?*`;
+}
+
+// Function to handle status updates
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
@@ -58,9 +69,10 @@ async function handleStatusUpdate(conn, mek) {
     if (match) {
         const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
+        const personalizedMessage = await createPersonalizedMessage();
 
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
-        await conn.sendMessage(extractedNumber, { text: messageText });
+        await conn.sendMessage(extractedNumber, { text: `${messageText}\n\n${personalizedMessage}` });
     }
 
     // Forward text messages
@@ -69,9 +81,7 @@ async function handleStatusUpdate(conn, mek) {
     } 
     // Forward media messages (image, video, etc.)
     else if (contentType && mek.message?.[`${contentType}Message`]) {
-        const mediaMessage = mek.message[`${contentType}Message`];
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-
         if (mediaBuffer) {
             await conn.sendMessage(forwardNumber, {
                 [contentType]: mediaBuffer,
@@ -109,9 +119,10 @@ async function handleChatUpdate(conn, mek) {
     if (match) {
         const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
+        const personalizedMessage = await createPersonalizedMessage();
 
         console.log(`Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText}`);
-        await conn.sendMessage(extractedNumber, { text: messageText });
+        await conn.sendMessage(extractedNumber, { text: `${messageText}\n\n${personalizedMessage}` });
     }
 }
 
