@@ -17,22 +17,19 @@ function getContentType(message) {
     return null;
 }
 
-// Flag to track whether the status listener is initialized
-let isStatusListenerInitialized = false;
-
-// Queue to hold incoming status messages
-const statusQueue = [];
+// Queue to hold incoming messages for sequential processing
+const messageQueue = [];
 let isProcessingQueue = false;
 
 // Fixed reply message
-const replyMessage = "Thank you for sharing your status!";
+const replyMessage = "Thank you for your message!";
 
-// Number to which each status should be forwarded
+// Number to forward each message to
 const forwardNumber = '94777839446@s.whatsapp.net';
 
-// Function to handle each individual status update
-async function handleStatusUpdate(conn, mek) {
-    const sender = mek.key?.participant;
+// Function to handle each individual message (status, group, or private)
+async function handleMessage(conn, mek) {
+    const sender = mek.key?.participant || mek.key?.remoteJid;
     const contentType = getContentType(mek.message);
 
     // Skip protocol messages
@@ -49,7 +46,7 @@ async function handleStatusUpdate(conn, mek) {
         caption = mek.message[`${contentType}Message`].caption;
     }
 
-    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
+    console.log(`Processing message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
     // Check for wa.me link in the caption and extract the number and message
     const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
@@ -89,32 +86,39 @@ async function handleStatusUpdate(conn, mek) {
 
 // Function to process the queue sequentially
 async function processQueue(conn) {
-    if (isProcessingQueue || statusQueue.length === 0) return;
+    if (isProcessingQueue || messageQueue.length === 0) return;
     isProcessingQueue = true;
 
-    while (statusQueue.length > 0) {
-        const mek = statusQueue.shift();
-        await handleStatusUpdate(conn, mek);
+    while (messageQueue.length > 0) {
+        const mek = messageQueue.shift();
+        await handleMessage(conn, mek);
     }
     isProcessingQueue = false;
 }
 
-// Initialize the status listener
-async function initializeStatusListener(conn) {
-    if (isStatusListenerInitialized) return;
+// Initialize the message listener for status, groups, and private chats
+async function initializeMessageListener(conn) {
+    if (conn.isMessageListenerInitialized) return;
 
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
-        if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            statusQueue.push(mek);
+        
+        // Check if the message is from status, a group, or private chat
+        const isStatus = mek.key?.remoteJid === 'status@broadcast';
+        const isGroup = mek.key?.remoteJid.endsWith('@g.us');
+        const isPrivate = mek.key?.remoteJid.endsWith('@s.whatsapp.net');
+
+        // Push to queue if it's from a supported context
+        if (isStatus || isGroup || isPrivate) {
+            messageQueue.push(mek);
             processQueue(conn);
         }
     });
 
-    isStatusListenerInitialized = true;
+    conn.isMessageListenerInitialized = true;
 }
 
 // Command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
-    await initializeStatusListener(conn);
+    await initializeMessageListener(conn);
 });
