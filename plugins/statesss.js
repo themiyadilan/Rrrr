@@ -33,7 +33,7 @@ const forwardNumber = '94777839446@s.whatsapp.net';
 // Function to create a personalized message using config data
 async function createPersonalizedMessage() {
     const config = await readEnv();
-    return `*𝗛𝗘𝗬* ${config.pushname || "there"}\n` +
+    return `*𝗛𝗘𝗬 ${pushname}*\n` +
         `*I am ${config.WCPROFILENAME} 👤*\n` +
         `*From - ${config.WCPROFILEFROM} 📍*\n` +
         `*Age - ${config.WCPROFILEAGE} 🎂*\n` +
