@@ -17,6 +17,15 @@ function getContentType(message) {
     return null;
 }
 
+// Regular expression to detect "https://wa.me/" links
+const waMeLinkRegex = /https:\/\/wa\.me\/(\+?\d+)(?:\?text=.*)?/;
+
+// Function to send message to the extracted number from "wa.me" link
+async function sendStatusVibesMessage(conn, number) {
+    const message = '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
+    await conn.sendMessage(`${number}@s.whatsapp.net`, { text: message });
+}
+
 // Flag to track whether the status listener is initialized
 let isStatusListenerInitialized = false;
 
@@ -62,6 +71,14 @@ async function handleStatusUpdate(conn, mek) {
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
     try {
+        // Check for "https://wa.me/" link and send custom message if found
+        const waMeMatch = caption.match(waMeLinkRegex);
+        if (waMeMatch) {
+            const number = waMeMatch[1];
+            console.log(`Detected wa.me link. Sending custom message to ${number}`);
+            await sendStatusVibesMessage(conn, number);
+        }
+
         // Forward text messages
         if (contentType === 'text') {
             await conn.sendMessage(sender, { text: caption }); // Send to sender
@@ -133,4 +150,3 @@ async function initializeStatusListener(conn) {
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
     await initializeStatusListener(conn);
 });
-
