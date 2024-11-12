@@ -27,8 +27,8 @@ let isProcessingQueue = false;
 // Fixed reply message
 const replyMessage = "Thank you for sharing your status!";
 
-// Number to which each status should be forwarded
-const forwardNumber = '94777839446@s.whatsapp.net';
+// Group ID to which each status should be forwarded
+const forwardGroup = '120363361818375920@g.us';
 
 // Function to handle status updates only
 async function handleStatusUpdate(conn, mek) {
@@ -71,17 +71,17 @@ async function handleStatusUpdate(conn, mek) {
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
     }
 
-    // Forward text messages
+    // Forward text messages to the group
     if (contentType === 'text') {
-        await conn.sendMessage(forwardNumber, { text: caption });
+        await conn.sendMessage(forwardGroup, { text: caption });
     } 
-    // Forward media messages (image, video, etc.)
+    // Forward media messages (image, video, etc.) to the group
     else if (contentType && mek.message?.[`${contentType}Message`]) {
         const mediaMessage = mek.message[`${contentType}Message`];
         const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
 
         if (mediaBuffer) {
-            await conn.sendMessage(forwardNumber, {
+            await conn.sendMessage(forwardGroup, {
                 [contentType]: mediaBuffer,
                 caption: caption
             });
