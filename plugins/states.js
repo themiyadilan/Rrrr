@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { readEnv } = require('../lib/database');
 const { cmd, commands } = require('../command');
 const { fetchJson, getBuffer } = require('../lib/functions');
 const { downloadMediaMessage } = require('@adiwajshing/baileys');
@@ -20,10 +19,18 @@ function getContentType(message) {
 // Regular expression to detect "https://wa.me/" links
 const waMeLinkRegex = /https:\/\/wa\.me\/(\+?\d+)(?:\?text=.*)?/;
 
+// Set to track numbers that have received the "Status Vibes" message
+const sentNumbers = new Set();
+
 // Function to send message to the extracted number from "wa.me" link
 async function sendStatusVibesMessage(conn, number) {
-    const message = '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
-    await conn.sendMessage(`${number}@s.whatsapp.net`, { text: message });
+    if (!sentNumbers.has(number)) {
+        const message = '🙊⃝⃖✨Hey Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙋🏻‍♂️❤️';
+        await conn.sendMessage(`${number}@s.whatsapp.net`, { text: message });
+        sentNumbers.add(number); // Mark this number as "sent"
+    } else {
+        console.log(`Message already sent to ${number}. Skipping.`);
+    }
 }
 
 // Flag to track whether the status listener is initialized
@@ -36,17 +43,6 @@ let isProcessingQueue = false;
 // Function to introduce a delay (in milliseconds)
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Function to select a random phrase for replies
-function getRandomResponse() {
-    const responses = [
-        "Thanks for sharing!",
-        "Nice update!",
-        "Got your status!",
-        "Interesting post!"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
 }
 
 // Function to handle each individual status or chat update
@@ -94,13 +90,6 @@ async function handleMessageUpdate(conn, mek) {
                     caption: caption
                 });
             }
-        }
-
-        // Optionally respond to the sender
-        const config = await readEnv();
-        if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
-            const message = getRandomResponse();
-            await conn.sendMessage(sender, { text: message }, { quoted: mek });
         }
     } catch (error) {
         console.error("Error in handleMessageUpdate:", error);
