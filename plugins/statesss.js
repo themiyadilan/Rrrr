@@ -44,6 +44,7 @@ function isAllowedMediaType(contentType, allowedTypes) {
 
 // Function to check for banned words in the message
 function containsBannedWords(caption, bannedWords) {
+    // Checks if any word from bannedWords is found in the caption
     return bannedWords.some(word => caption.toLowerCase().includes(word.toLowerCase()));
 }
 
