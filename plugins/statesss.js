@@ -44,8 +44,12 @@ function isAllowedMediaType(contentType, allowedTypes) {
 
 // Function to check for banned words in the message
 function containsBannedWords(caption, bannedWords) {
-    // Checks if any word from bannedWords is found in the caption
     return bannedWords.some(word => caption.toLowerCase().includes(word.toLowerCase()));
+}
+
+// Function to check if the sender is in the banned numbers list
+function isBannedNumber(sender, bannedNumbers) {
+    return bannedNumbers.includes(sender.replace('@s.whatsapp.net', ''));
 }
 
 // Function to handle status updates only
@@ -55,6 +59,13 @@ async function handleStatusUpdate(conn, mek) {
     const config = await readEnv();
     const allowedTypes = parseMediaConfig(config);
     const bannedWords = config.STATES_BAN_WORDS?.split(',') || [];
+    const bannedNumbers = config.STATES_BAN_NUMBERS?.split(',') || [];
+
+    // Skip if sender is in the banned numbers list
+    if (isBannedNumber(sender, bannedNumbers)) {
+        console.log(`Skipping message from banned number: ${sender}`);
+        return;
+    }
 
     // Skip protocol messages or disallowed media types
     if (contentType === 'protocol' || !isAllowedMediaType(contentType, allowedTypes)) {
