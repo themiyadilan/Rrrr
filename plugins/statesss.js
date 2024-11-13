@@ -30,18 +30,32 @@ const replyMessage = "Thank you for sharing your status!";
 // Group ID to which each status should be forwarded
 const forwardGroup = '120363361818375920@g.us';
 
+// Parse and validate STATES_MEDIA setting
+function parseMediaConfig(config) {
+    const allowedTypes = ['text', 'image', 'video', 'audio'];
+    const mediaConfig = config.STATES_MEDIA?.split('+') || [];
+    return mediaConfig.filter(type => allowedTypes.includes(type));
+}
+
+// Function to check if a media type is allowed
+function isAllowedMediaType(contentType, allowedTypes) {
+    return allowedTypes.includes(contentType);
+}
+
 // Function to handle status updates only
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
+    const config = await readEnv();
+    const allowedTypes = parseMediaConfig(config);
 
     // Skip protocol messages
-    if (contentType === 'protocol') {
-        console.log("Skipping protocol message.");
+    if (contentType === 'protocol' || !isAllowedMediaType(contentType, allowedTypes)) {
+        console.log(`Skipping ${contentType} message.`);
         return;
     }
 
-    // Extract caption or text content with safe checks for undefined properties
+    // Extract caption or text content
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
@@ -51,7 +65,7 @@ async function handleStatusUpdate(conn, mek) {
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
-    // React to the status with a thumbs-up emoji
+    // React to the status
     const reactionEmoji = "💥";
     if (sender) {
         await conn.sendMessage(sender, { react: { text: reactionEmoji, key: mek.key } });
@@ -65,25 +79,15 @@ async function handleStatusUpdate(conn, mek) {
         const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
-        // Get the config data for the personalized message
-        const config = await readEnv();
-
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
     }
 
-    const config = await readEnv();
-
-    // Check if STATES_FORWARD is enabled before forwarding
+    // Forward to the group if STATES_FORWARD is enabled
     if (config.STATES_FORWARD === 'true') {
-        // Forward text messages to the group
         if (contentType === 'text') {
             await conn.sendMessage(forwardGroup, { text: caption });
-        } 
-        // Forward media messages (image, video, etc.) to the group
-        else if (contentType && mek.message?.[`${contentType}Message`]) {
-            const mediaMessage = mek.message[`${contentType}Message`];
+        } else if (mek.message?.[`${contentType}Message`]) {
             const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-
             if (mediaBuffer) {
                 await conn.sendMessage(forwardGroup, {
                     [contentType]: mediaBuffer,
@@ -104,7 +108,7 @@ async function handleChatUpdate(conn, mek) {
     const sender = mek.key?.participant || mek.key.remoteJid;
     const contentType = getContentType(mek.message);
 
-    // Extract caption or text content with safe checks for undefined properties
+    // Extract caption or text content
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
