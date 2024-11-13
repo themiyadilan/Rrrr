@@ -1,5 +1,4 @@
 const { cmd, commands } = require('../command');
-const { fetchJson } = require('../lib/functions');
 
 cmd({
   pattern: "save?",
@@ -12,25 +11,22 @@ cmd({
     // Only allow the bot owner to use this command
     if (!isOwner) return;
 
-    // Attempt to check if the contact is on WhatsApp using fetchJson
     try {
-      const contact = await fetchJson(`https://api.whatsapp.com/v1/contacts/${sender}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      // If the contact exists, we assume it's saved and react with ✅
-      if (contact && contact.status === 'active') {
+      // Check if the contact exists in the contact list
+      const contact = await conn.onWhatsApp(sender + '@s.whatsapp.net');
+      
+      if (contact && contact.length > 0 && contact[0].exists) {
+        // If contact exists, react with ✅
         await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
       } else {
-        // If the contact does not exist or is inactive, react with ❌
+        // If contact does not exist, react with ❌
         await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
       }
     } catch (error) {
-      // If there's an error, assume the contact is not saved
-      await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
+      console.error("Error checking contact save status:", error);
+      await conn.sendMessage(from, { react: { text: "🤍", key: mek.key } });
     }
   } catch (error) {
-    console.error("Error checking contact save status:", error);
+    console.error("General error checking contact save status:", error);
   }
 });
