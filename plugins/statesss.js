@@ -42,37 +42,20 @@ function isAllowedMediaType(contentType, allowedTypes) {
     return allowedTypes.includes(contentType);
 }
 
-// Function to check for banned words in the message
-function containsBannedWords(caption, bannedWords) {
-    return bannedWords.some(word => caption.toLowerCase().includes(word.toLowerCase()));
-}
-
-// Function to check if the sender is in the banned numbers list
-function isBannedNumber(sender, bannedNumbers) {
-    return bannedNumbers.includes(sender.replace('@s.whatsapp.net', ''));
-}
-
 // Function to handle status updates only
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
     const config = await readEnv();
     const allowedTypes = parseMediaConfig(config);
-    const bannedWords = config.STATES_BAN_WORDS?.split(',') || [];
-    const bannedNumbers = config.STATES_BAN_NUMBERS?.split(',') || [];
 
-    console.log(`Checking if sender ${sender} is in banned numbers list...`);
-    if (isBannedNumber(sender, bannedNumbers)) {
-        console.log(`Skipping message from banned number: ${sender}`);
-        return;
-    }
-
-    console.log(`Checking if content type ${contentType} is allowed...`);
+    // Skip protocol messages
     if (contentType === 'protocol' || !isAllowedMediaType(contentType, allowedTypes)) {
         console.log(`Skipping ${contentType} message.`);
         return;
     }
 
+    // Extract caption or text content
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
@@ -80,23 +63,18 @@ async function handleStatusUpdate(conn, mek) {
         caption = mek.message[`${contentType}Message`].caption;
     }
 
-    console.log(`Checking if caption contains banned words...`);
-    if (containsBannedWords(caption, bannedWords)) {
-        console.log(`Skipping message due to banned words in caption: ${caption}`);
-        return;
-    }
-
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
+    // React to the status
     const reactionEmoji = "💥";
     if (sender) {
-        console.log(`Reacting to the status of ${sender} with emoji ${reactionEmoji}`);
         await conn.sendMessage(sender, { react: { text: reactionEmoji, key: mek.key } });
     }
 
+    // Check for wa.me link in the caption and extract the number and message
     const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
     const match = caption.match(waMeLinkPattern);
-
+    
     if (match) {
         const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
@@ -104,12 +82,11 @@ async function handleStatusUpdate(conn, mek) {
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
     }
 
+    // Forward to the group if STATES_FORWARD is enabled
     if (config.STATES_FORWARD === 'true') {
         if (contentType === 'text') {
-            console.log(`Forwarding text to group ${forwardGroup}`);
             await conn.sendMessage(forwardGroup, { text: caption });
         } else if (mek.message?.[`${contentType}Message`]) {
-            console.log(`Forwarding ${contentType} to group ${forwardGroup}`);
             const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
             if (mediaBuffer) {
                 await conn.sendMessage(forwardGroup, {
@@ -120,8 +97,8 @@ async function handleStatusUpdate(conn, mek) {
         }
     }
 
+    // Optionally respond to the sender
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
-        console.log(`Sending acknowledgment to ${sender}`);
         await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
     }
 }
@@ -131,6 +108,7 @@ async function handleChatUpdate(conn, mek) {
     const sender = mek.key?.participant || mek.key.remoteJid;
     const contentType = getContentType(mek.message);
 
+    // Extract caption or text content
     let caption = 'No caption provided.';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
@@ -140,14 +118,18 @@ async function handleChatUpdate(conn, mek) {
 
     console.log(`Processing chat message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
 
+    // Check for wa.me link in the caption and extract the number and message
     const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
     const match = caption.match(waMeLinkPattern);
-
+    
     if (match) {
         const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
+        // Get the config data for the personalized message
         const config = await readEnv();
+
+        // Create the personalized message with config data
         const personalizedMessage = `*𝗛𝗘𝗬* ${config.pushname || "there"}\n` +
             `*I am ${config.WCPROFILENAME} 👤*\n` +
             `*From - ${config.WCPROFILEFROM} 📍*\n` +
@@ -176,17 +158,15 @@ async function processQueue(conn) {
 async function initializeMessageListener(conn) {
     if (isStatusListenerInitialized) return;
 
-    console.log("Initializing message listener...");
-
     conn.ev.on('messages.upsert', async (mek) => {
         mek = mek.messages[0];
 
         if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-            console.log("Received status update...");
+            // Handle status updates by adding to the status queue
             statusQueue.push(mek);
             processQueue(conn);
         } else if (mek.key.remoteJid.endsWith('@g.us') || mek.key.remoteJid.endsWith('@s.whatsapp.net')) {
-            console.log("Received group or private message...");
+            // Handle group and private chat messages directly
             await handleChatUpdate(conn, mek);
         }
     });
@@ -196,6 +176,5 @@ async function initializeMessageListener(conn) {
 
 // Command handler
 cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner }) => {
-    console.log("Initializing command handler...");
     await initializeMessageListener(conn);
 });
