@@ -77,7 +77,7 @@ async function handleStatusUpdate(conn, mek) {
     }
 
     // Extract caption or text content
-    let caption = 'No caption provided.';
+    let caption = '*ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ*';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
     } else if (mek.message?.[`${contentType}Message`]?.caption) {
@@ -139,7 +139,7 @@ async function handleChatUpdate(conn, mek) {
     const contentType = getContentType(mek.message);
 
     // Extract caption or text content
-    let caption = 'No caption provided.';
+    let caption = '*ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ*';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
     } else if (mek.message?.[`${contentType}Message`]?.caption) {
