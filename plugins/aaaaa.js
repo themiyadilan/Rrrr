@@ -1,4 +1,5 @@
 const { cmd, commands } = require('../command');
+const { fetchJson } = require('../lib/functions');
 
 cmd({
   pattern: "save?",
@@ -11,14 +12,22 @@ cmd({
     // Only allow the bot owner to use this command
     if (!isOwner) return;
 
-    // Check if the contact is saved in the bot's contacts
-    const contact = await conn.isOnWhatsApp(sender);
+    // Attempt to check if the contact is on WhatsApp using fetchJson
+    try {
+      const contact = await fetchJson(`https://api.whatsapp.com/v1/contacts/${sender}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-    if (contact) {
-      // If contact is saved, react with ✅
-      await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
-    } else {
-      // If contact is not saved, react with ❌
+      // If the contact exists, we assume it's saved and react with ✅
+      if (contact && contact.status === 'active') {
+        await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
+      } else {
+        // If the contact does not exist or is inactive, react with ❌
+        await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
+      }
+    } catch (error) {
+      // If there's an error, assume the contact is not saved
       await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
     }
   } catch (error) {
