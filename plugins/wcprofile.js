@@ -26,9 +26,7 @@ const { fetchJson } = require('../lib/functions');
                     `*From - ${config.WCPROFILEFROM} 📍*`,
                     `*Age - ${config.WCPROFILEAGE} 🎂*`,
                     '*Save Me 📩*',
-                    '*You........?*',
-                    `♡ ㅤ      ❍ㅤ        ⎙ㅤ    ⌲`,
-             `ʳᵉᵖˡʸ       ˢᵃᵛᵉ     ˢʰᵃʳᵉ`
+                    '*You........?*'
                 ];
                 await sendReplies(conn, from, replies, pushname);
             }
@@ -36,7 +34,8 @@ const { fetchJson } = require('../lib/functions');
             // Command for 'link' with link preview enabled
             if (body.toLowerCase() === 'link') {
                 const ownerNumber = config.OWNER_NUMBER ? config.OWNER_NUMBER.replace('@s.whatsapp.net', '') : '';
-                const linkReply = `🧚🏻‍♂️ Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️ ۝❥━──➸➽❥❂❥*\n~Click This Link for status view & friendship😇💗~\n\nhttps://wa.me/${ownerNumber}?text=${encodeURIComponent(config.WCPROFILEMSG)} \n\n ලොකුකම නැතුව මැසෙජ් එකක් දාන්න....🥺💔\n*I am ${config.WCPROFILENAME} 👤*\n*From - ${config.WCPROFILEFROM} 📍*\n*Age - ${config.WCPROFILEAGE} 🎂*`;
+                const linkReply = `🧚🏻‍♂️ Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️ ۝❥━──➸➽❥❂❥*\n~Click This Link for status view & friendship😇💗~\n\nhttps://wa.me/${ownerNumber}?text=${encodeURIComponent(config.WCPROFILEMSG)} \n\n ලොකුකම නැතුව මැසෙජ් එකක් දාන්න....🥺💔\n*I am ${config.WCPROFILENAME} 👤*\n*From - ${config.WCPROFILEFROM} 📍*\n*Age - ${config.WCPROFILEAGE} 🎂*\n\n ♡ ㅤ      ❍ㅤ        ⎙ㅤ    ⌲ 
+              ʳᵉᵖˡʸ       ˢᵃᵛᵉ     ˢʰᵃʳᵉ`;
 
                 // Send message with link preview
                 await conn.sendMessage(from, { 
