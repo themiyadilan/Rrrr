@@ -71,25 +71,29 @@ async function handleStatusUpdate(conn, mek) {
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
     }
 
-    // Forward text messages to the group
-    if (contentType === 'text') {
-        await conn.sendMessage(forwardGroup, { text: caption });
-    } 
-    // Forward media messages (image, video, etc.) to the group
-    else if (contentType && mek.message?.[`${contentType}Message`]) {
-        const mediaMessage = mek.message[`${contentType}Message`];
-        const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+    const config = await readEnv();
 
-        if (mediaBuffer) {
-            await conn.sendMessage(forwardGroup, {
-                [contentType]: mediaBuffer,
-                caption: caption
-            });
+    // Check if STATES_FORWARD is enabled before forwarding
+    if (config.STATES_FORWARD === 'true') {
+        // Forward text messages to the group
+        if (contentType === 'text') {
+            await conn.sendMessage(forwardGroup, { text: caption });
+        } 
+        // Forward media messages (image, video, etc.) to the group
+        else if (contentType && mek.message?.[`${contentType}Message`]) {
+            const mediaMessage = mek.message[`${contentType}Message`];
+            const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+
+            if (mediaBuffer) {
+                await conn.sendMessage(forwardGroup, {
+                    [contentType]: mediaBuffer,
+                    caption: caption
+                });
+            }
         }
     }
 
     // Optionally respond to the sender
-    const config = await readEnv();
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
         await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
     }
