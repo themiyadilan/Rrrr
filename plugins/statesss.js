@@ -42,14 +42,20 @@ function isAllowedMediaType(contentType, allowedTypes) {
     return allowedTypes.includes(contentType);
 }
 
+// Function to check for banned words in the message
+function containsBannedWords(caption, bannedWords) {
+    return bannedWords.some(word => caption.toLowerCase().includes(word.toLowerCase()));
+}
+
 // Function to handle status updates only
 async function handleStatusUpdate(conn, mek) {
     const sender = mek.key?.participant;
     const contentType = getContentType(mek.message);
     const config = await readEnv();
     const allowedTypes = parseMediaConfig(config);
+    const bannedWords = config.STATES_BAN_WORDS?.split(',') || [];
 
-    // Skip protocol messages
+    // Skip protocol messages or disallowed media types
     if (contentType === 'protocol' || !isAllowedMediaType(contentType, allowedTypes)) {
         console.log(`Skipping ${contentType} message.`);
         return;
@@ -61,6 +67,12 @@ async function handleStatusUpdate(conn, mek) {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
     } else if (mek.message?.[`${contentType}Message`]?.caption) {
         caption = mek.message[`${contentType}Message`].caption;
+    }
+
+    // Check for banned words
+    if (containsBannedWords(caption, bannedWords)) {
+        console.log(`Skipping message due to banned words in caption: ${caption}`);
+        return;
     }
 
     console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
