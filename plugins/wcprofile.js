@@ -34,7 +34,7 @@ const { fetchJson } = require('../lib/functions');
             // Command for 'link' with link preview enabled
             if (body.toLowerCase() === 'link') {
                 const ownerNumber = config.OWNER_NUMBER ? config.OWNER_NUMBER.replace('@s.whatsapp.net', '') : '';
-                const linkReply = `🧚🏻‍♂️ Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️ ۝❥━──➸➽❥❂❥*\n~Click This Link for status view & friendship😇💗~\n\nhttps://wa.me/${ownerNumber}?text=${encodeURIComponent(config.WCPROFILEMSG)} \n\n ලොකුකම නැතුව මැසෙජ් එකක් දාන්න....🥺💔`;
+                const linkReply = `🧚🏻‍♂️ Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️ ۝❥━──➸➽❥❂❥*\n~Click This Link for status view & friendship😇💗~\n\nhttps://wa.me/${ownerNumber}?text=${encodeURIComponent(config.WCPROFILEMSG)} \n\n ලොකුකම නැතුව මැසෙජ් එකක් දාන්න....🥺💔\n*I am ${config.WCPROFILENAME} 👤*\n*From - ${config.WCPROFILEFROM} 📍*\n*Age - ${config.WCPROFILEAGE} 🎂*`;
 
                 // Send message with link preview
                 await conn.sendMessage(from, { 
