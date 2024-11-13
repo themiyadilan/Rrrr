@@ -41,7 +41,7 @@ const { fetchJson } = require('../lib/functions');
                 // Send message with link preview
                 await conn.sendMessage(from, { 
                     text: linkReply, 
-                    previewType: 'url' // This enables the link preview
+                    previewType: 'https://files.catbox.moe/h34zzk.jpeg' // This enables the link preview
                 }, { quoted: null });
             }
 
