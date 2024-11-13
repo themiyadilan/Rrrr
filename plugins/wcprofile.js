@@ -26,7 +26,9 @@ const { fetchJson } = require('../lib/functions');
                     `*From - ${config.WCPROFILEFROM} 📍*`,
                     `*Age - ${config.WCPROFILEAGE} 🎂*`,
                     '*Save Me 📩*',
-                    '*You........?*'
+                    '*You........?*',
+                    '♡ ㅤ      ❍ㅤ        ⎙ㅤ    ⌲'
+              'ʳᵉᵖˡʸ       ˢᵃᵛᵉ     ˢʰᵃʳᵉ'
                 ];
                 await sendReplies(conn, from, replies, pushname);
             }
