@@ -27,8 +27,11 @@ let isProcessingQueue = false;
 // Fixed reply message
 const replyMessage = "Thank you for sharing your status!";
 
-// Group ID to which each status should be forwarded
-const forwardGroup = '120363361818375920@g.us';
+// Parse and validate STATES_GROUPS setting
+async function getGroups() {
+    const config = await readEnv();
+    return config.STATES_GROUPS?.split(',') || [];
+}
 
 // Parse and validate STATES_MEDIA setting
 function parseMediaConfig(config) {
@@ -106,17 +109,20 @@ async function handleStatusUpdate(conn, mek) {
         console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
     }
 
-    // Forward to the group if STATES_FORWARD is enabled
+    // Forward to the groups if STATES_FORWARD is enabled
     if (config.STATES_FORWARD === 'true') {
-        if (contentType === 'text') {
-            await conn.sendMessage(forwardGroup, { text: caption });
-        } else if (mek.message?.[`${contentType}Message`]) {
-            const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-            if (mediaBuffer) {
-                await conn.sendMessage(forwardGroup, {
-                    [contentType]: mediaBuffer,
-                    caption: caption
-                });
+        const groups = await getGroups();
+        for (const group of groups) {
+            if (contentType === 'text') {
+                await conn.sendMessage(group, { text: caption });
+            } else if (mek.message?.[`${contentType}Message`]) {
+                const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+                if (mediaBuffer) {
+                    await conn.sendMessage(group, {
+                        [contentType]: mediaBuffer,
+                        caption: caption
+                    });
+                }
             }
         }
     }
