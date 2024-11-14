@@ -19,20 +19,26 @@ const storage = mega({
 
 // Function to load contacts from the existing .vcf file
 const loadContacts = () => {
+  console.log('Loading contacts from file...');
   if (fs.existsSync(contactsFilePath)) {
+    console.log('Contacts file found. Reading data...');
     return fs.readFileSync(contactsFilePath, 'utf-8');
   }
+  console.log('No existing contacts file found.');
   return '';
 };
 
 // Function to append a contact to the .vcf file
 const appendContact = (number) => {
+  console.log(`Appending contact: ${number}`);
   const vCardFormat = `BEGIN:VCARD\nVERSION:2.1\nN:;${number};;;\nFN:${number}\nTEL;CELL:${number}\nEND:VCARD\n`;
   fs.appendFileSync(contactsFilePath, vCardFormat);
+  console.log('Contact appended successfully.');
 };
 
 // Upload the file to Mega
 const uploadToMega = async () => {
+  console.log('Starting file upload to Mega...');
   const fileStream = fs.createReadStream(contactsFilePath);
   const upload = storage.upload({ name: 'contacts.vcf' });
   fileStream.pipe(upload);
@@ -56,14 +62,21 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { from, senderNumber, reply }) => {
   try {
+    console.log('Received command for saving contact.');
+
     // Ensure the code only runs for inbox messages
-    if (m.isGroup) return;
+    if (m.isGroup) {
+      console.log('Message is from a group. Ignoring.');
+      return;
+    }
 
     // Load current contacts from the .vcf file
     let contacts = loadContacts();
+    console.log('Loaded contacts:', contacts);
 
     // Check if the contact is already saved
     if (!contacts.includes(senderNumber)) {
+      console.log(`Contact ${senderNumber} is new. Saving...`);
       // Append new contact
       appendContact(senderNumber);
 
@@ -72,7 +85,9 @@ cmd({
 
       // Send confirmation message
       reply(`Your contact has been saved successfully.`);
+      console.log('Contact saving and upload process completed.');
     } else {
+      console.log(`Contact ${senderNumber} is already in the file.`);
       reply(`Your contact is already saved.`);
     }
   } catch (error) {
