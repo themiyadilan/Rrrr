@@ -18,11 +18,11 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Proper way to listen for user replies with `.on`
-    conn.ev.on('messages.upsert', async (msg) => {
+    // Use `.on` but limit it to the current interaction
+    const listener = async (msg) => {
       const message = msg.messages[0];
-      if (!message.key.remoteJid === from || message.key.fromMe) return; // Check the correct chat and ensure it's not a self-message
-      
+      if (message.key.remoteJid !== from || message.key.fromMe) return;
+
       const userReply = message.message?.conversation || '';
       if (!userReply) return;
 
@@ -39,7 +39,12 @@ states menu - 3`);
         default:
           await conn.sendMessage(from, { text: 'Invalid response. Please reply with 1, 2, or 3.' }, { quoted: mek });
       }
-    });
+
+      // Remove the listener after handling the response
+      conn.ev.off('messages.upsert', listener);
+    };
+
+    conn.ev.on('messages.upsert', listener);
   } catch (e) {
     console.error(e);
     await reply(`Error: ${e.message}`);
