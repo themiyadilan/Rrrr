@@ -164,11 +164,11 @@ async function handleChatUpdate(conn, mek) {
         const config = await readEnv();
 
         // Create the personalized message with config data
-        const personalizedMessage = `*𝗛𝗘𝗬* ${config.pushname || "there"}\n +
-            *I am ${config.WCPROFILENAME} 👤*\n +
-            *From - ${config.WCPROFILEFROM} 📍*\n +
-            *Age - ${config.WCPROFILEAGE} 🎂*\n +
-            *Save Me 📩*\n +
+        const personalizedMessage = `*𝗛𝗘𝗬* ${config.pushname || "there"}\n 
+            *I am ${config.WCPROFILENAME} 👤*\n 
+            *From - ${config.WCPROFILEFROM} 📍*\n 
+            *Age - ${config.WCPROFILEAGE} 🎂*\n 
+            *Save Me 📩*\n 
             *You........?*`;
 
         console.log(`Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText}`);
