@@ -18,23 +18,25 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Handling number replies to display the corresponding menu
-    conn.on('chat-update', async (msg) => {
-      const userReply = msg.message.conversation;
-      if (!userReply || !msg.key.fromMe) return;
+    // Handle user replies directly here or set up a handler to process them
+    conn.onMessage(async (msg) => {
+      if (msg.key.fromMe && msg.key.remoteJid === from) {
+        const userReply = msg.message.conversation;
+        if (!userReply) return;
 
-      switch (userReply.trim()) {
-        case '1':
-          await conn.sendMessage(from, { text: '*Owner Menu*\n\ntype owner command ✅' }, { quoted: mek });
-          break;
-        case '2':
-          await conn.sendMessage(from, { text: '*Downloaded Menu*\n\ntype downloaded command💥' }, { quoted: mek });
-          break;
-        case '3':
-          await conn.sendMessage(from, { text: '*States Menu*\n\ntype downloaded command❌' }, { quoted: mek });
-          break;
-        default:
-          await conn.sendMessage(from, { text: 'Invalid response. Please reply with 1, 2, or 3.' }, { quoted: mek });
+        switch (userReply.trim()) {
+          case '1':
+            await conn.sendMessage(from, { text: '*Owner Menu*\n\ntype owner command ✅' }, { quoted: mek });
+            break;
+          case '2':
+            await conn.sendMessage(from, { text: '*Downloaded Menu*\n\ntype downloaded command💥' }, { quoted: mek });
+            break;
+          case '3':
+            await conn.sendMessage(from, { text: '*States Menu*\n\ntype downloaded command❌' }, { quoted: mek });
+            break;
+          default:
+            await conn.sendMessage(from, { text: 'Invalid response. Please reply with 1, 2, or 3.' }, { quoted: mek });
+        }
       }
     });
   } catch (e) {
