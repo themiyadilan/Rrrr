@@ -16,32 +16,33 @@ let baseUrl;
 const yourName = sensitiveData.nameSignature;
 
 // Event Listener for Numeric Reply Handling
-conn.ev.on('messages.upsert', async (msgUpdate) => {
-    const msg = msgUpdate.messages[0];
-    if (!msg.message || !msg.message.extendedTextMessage) return;
-
+async function handleNumericReply(conn, msg) {
     const selectedOption = msg.message.extendedTextMessage.text.trim();
     if (msg.message.extendedTextMessage.contextInfo && msg.message.extendedTextMessage.contextInfo.stanzaId === vv.key.id) {
         try {
             switch (selectedOption) {
                 case '1':
-                    reply("Option 1 selected: Processing your request...");
+                    await conn.reply(msg.key.remoteJid, "Option 1 selected: Processing your request...", msg);
                     break;
-
                 case '2':
-                    reply("Option 2 selected: Processing your request...");
+                    await conn.reply(msg.key.remoteJid, "Option 2 selected: Processing your request...", msg);
                     break;
-
                 default:
-                    reply("Error: Invalid option selected.");
+                    await conn.reply(msg.key.remoteJid, "Error: Invalid option selected.", msg);
             }
         } catch (e) {
             console.error(e);
-            reply("An error occurred while processing your request.");
+            await conn.reply(msg.key.remoteJid, "An error occurred while processing your request.", msg);
         }
     } else {
-        reply('❌ Failed to fetch the download link. Please try again later ❌');
+        await conn.reply(msg.key.remoteJid, '❌ Failed to fetch the download link. Please try again later ❌', msg);
     }
+}
+
+conn.ev.on('messages.upsert', async (msgUpdate) => {
+    const msg = msgUpdate.messages[0];
+    if (!msg.message || !msg.message.extendedTextMessage) return;
+    await handleNumericReply(conn, msg);
 });
 
 // Facebook Video Download Command
