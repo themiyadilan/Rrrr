@@ -9,7 +9,7 @@ cmd({
   from, reply
 }) => {
   try {
-    // Send the main menu reply
+    // Send the main menu
     await reply(`*Dila MD BOT Main Menu*
 
 _reply the relevant number and get the relevant menu_
@@ -18,9 +18,10 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Use `.on` but limit it to the current interaction
+    // Create an event listener for message responses
     const listener = async (msg) => {
       const message = msg.messages[0];
+      // Ensure it's the correct chat and not a self-message
       if (message.key.remoteJid !== from || message.key.fromMe) return;
 
       const userReply = message.message?.conversation || '';
@@ -45,6 +46,7 @@ states menu - 3`);
     };
 
     conn.ev.on('messages.upsert', listener);
+
   } catch (e) {
     console.error(e);
     await reply(`Error: ${e.message}`);
