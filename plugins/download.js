@@ -39,11 +39,16 @@ async function handleNumericReply(conn, msg) {
     }
 }
 
-conn.ev.on('messages.upsert', async (msgUpdate) => {
-    const msg = msgUpdate.messages[0];
-    if (!msg.message || !msg.message.extendedTextMessage) return;
-    await handleNumericReply(conn, msg);
-});
+function setupMessageListener(conn) {
+    conn.ev.on('messages.upsert', async (msgUpdate) => {
+        const msg = msgUpdate.messages[0];
+        if (!msg.message || !msg.message.extendedTextMessage) return;
+        await handleNumericReply(conn, msg);
+    });
+}
+
+// Run this once `conn` is initialized
+setupMessageListener(conn);
 
 // Facebook Video Download Command
 cmd({
