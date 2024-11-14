@@ -9,7 +9,6 @@ cmd({
   from, reply
 }) => {
   try {
-    // Send the main menu
     await reply(`*Dila MD BOT Main Menu*
 
 _reply the relevant number and get the relevant menu_
@@ -18,13 +17,12 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Create an event listener for message responses
     const listener = async (msg) => {
       const message = msg.messages[0];
-      // Ensure it's the correct chat and not a self-message
+      console.log('Received message:', message);
       if (message.key.remoteJid !== from || message.key.fromMe) return;
 
-      const userReply = message.message?.conversation || '';
+      const userReply = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
       if (!userReply) return;
 
       switch (userReply.trim()) {
@@ -41,7 +39,6 @@ states menu - 3`);
           await conn.sendMessage(from, { text: 'Invalid response. Please reply with 1, 2, or 3.' }, { quoted: mek });
       }
 
-      // Remove the listener after handling the response
       conn.ev.off('messages.upsert', listener);
     };
 
