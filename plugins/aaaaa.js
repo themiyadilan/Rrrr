@@ -1,97 +1,74 @@
-const config = require('../config');
 const { cmd } = require('../command');
-const fs = require('fs');
-const path = require('path');
-const mega = require('megajs');
-
-// Mega login credentials
-const megaEmail = 'www.themiyaofficialdilan@gmail.com';
-const megaPassword = 'Td01@mega';
-
-// Path for local contacts file
-const contactsFilePath = path.join(__dirname, 'contacts.vcf');
-
-// Initialize Mega storage
-const storage = mega({
-  email: megaEmail,
-  password: megaPassword
-});
-
-// Function to load contacts from the existing .vcf file
-const loadContacts = () => {
-  console.log('Loading contacts from file...');
-  if (fs.existsSync(contactsFilePath)) {
-    console.log('Contacts file found. Reading data...');
-    return fs.readFileSync(contactsFilePath, 'utf-8');
-  }
-  console.log('No existing contacts file found.');
-  return '';
-};
-
-// Function to append a contact to the .vcf file
-const appendContact = (number) => {
-  console.log(`Appending contact: ${number}`);
-  const vCardFormat = `BEGIN:VCARD\nVERSION:2.1\nN:;${number};;;\nFN:${number}\nTEL;CELL:${number}\nEND:VCARD\n`;
-  fs.appendFileSync(contactsFilePath, vCardFormat);
-  console.log('Contact appended successfully.');
-};
-
-// Upload the file to Mega
-const uploadToMega = async () => {
-  console.log('Starting file upload to Mega...');
-  const fileStream = fs.createReadStream(contactsFilePath);
-  const upload = storage.upload({ name: 'contacts.vcf' });
-  fileStream.pipe(upload);
-
-  return new Promise((resolve, reject) => {
-    upload.on('complete', () => {
-      console.log('File uploaded to Mega successfully.');
-      resolve();
-    });
-    upload.on('error', (err) => {
-      console.error('Error uploading file to Mega:', err);
-      reject(err);
-    });
-  });
-};
+const { sendMessage } = require('../lib/functions');
 
 cmd({
-  pattern: "inboxContact",
-  desc: "Save incoming contact to Mega",
+  pattern: "poll",
+  desc: "Create a poll",
   category: "main",
+  react: "",
   filename: __filename
-}, async (conn, mek, m, { from, senderNumber, reply }) => {
+}, async (conn, mek, m, { from, quoted, isCmd, command, args, q, isGroup, sender, senderNumber, groupMetadata, reply }) => {
   try {
-    console.log('Received command for saving contact.');
+    // Define poll options
+    const pollOptions = [
+      { option: "Tap 1", voteCount: 0 },
+      { option: "Tap 2", voteCount: 0 },
+      { option: "Tap 3", voteCount: 0 }
+    ];
 
-    // Ensure the code only runs for inbox messages
-    if (m.isGroup) {
-      console.log('Message is from a group. Ignoring.');
-      return;
-    }
+    // Define poll message content
+    const pollMessage = {
+      text: `*Poll Question*\n\nTap this to choose an option`,
+      footer: "Poll options",
+      buttons: [
+        { buttonId: 'poll_1', buttonText: { displayText: 'Tap 1' }, type: 1 },
+        { buttonId: 'poll_2', buttonText: { displayText: 'Tap 2' }, type: 1 },
+        { buttonId: 'poll_3', buttonText: { displayText: 'Tap 3' }, type: 1 }
+      ],
+      headerType: 1
+    };
 
-    // Load current contacts from the .vcf file
-    let contacts = loadContacts();
-    console.log('Loaded contacts:', contacts);
+    // Send the poll message with options to the group
+    await conn.sendMessage(from, pollMessage, { quoted: mek });
 
-    // Check if the contact is already saved
-    if (!contacts.includes(senderNumber)) {
-      console.log(`Contact ${senderNumber} is new. Saving...`);
-      // Append new contact
-      appendContact(senderNumber);
+    // Handle button response logic
+    conn.on('chat-update', async (msg) => {
+      if (msg.message.buttonsResponseMessage && msg.key.fromMe === false) {
+        const selectedButtonId = msg.message.buttonsResponseMessage.selectedButtonId;
 
-      // Upload the updated file to Mega
-      await uploadToMega();
+        // Allow only one answer by storing user responses
+        const pollVotes = {}; // Stores user votes based on sender ID
 
-      // Send confirmation message
-      reply(`Your contact has been saved successfully.`);
-      console.log('Contact saving and upload process completed.');
-    } else {
-      console.log(`Contact ${senderNumber} is already in the file.`);
-      reply(`Your contact is already saved.`);
-    }
+        if (pollVotes[msg.key.remoteJid]) {
+          reply("You have already voted in this poll.");
+          return;
+        }
+
+        pollVotes[msg.key.remoteJid] = selectedButtonId;
+
+        let responseText = "";
+        switch (selectedButtonId) {
+          case 'poll_1':
+            pollOptions[0].voteCount++;
+            responseText = `You selected: Tap 1`;
+            break;
+          case 'poll_2':
+            pollOptions[1].voteCount++;
+            responseText = `You selected: Tap 2`;
+            break;
+          case 'poll_3':
+            pollOptions[2].voteCount++;
+            responseText = `You selected: Tap 3`;
+            break;
+        }
+
+        // Send confirmation of selection
+        await conn.sendMessage(from, { text: responseText }, { quoted: mek });
+      }
+    });
+
   } catch (error) {
-    console.error('Error handling incoming contact:', error);
+    console.error("Error creating poll:", error);
     reply(`Error: ${error.message}`);
   }
 });
