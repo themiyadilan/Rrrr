@@ -18,10 +18,10 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Listen for user replies once
-    conn.ev.once('messages.upsert', async (msg) => {
+    // Proper way to listen for user replies with `.on`
+    conn.ev.on('messages.upsert', async (msg) => {
       const message = msg.messages[0];
-      if (message.key.remoteJid !== from || message.key.fromMe) return; // Check correct chat and ensure it's not a self message
+      if (!message.key.remoteJid === from || message.key.fromMe) return; // Check the correct chat and ensure it's not a self-message
       
       const userReply = message.message?.conversation || '';
       if (!userReply) return;
