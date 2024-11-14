@@ -19,14 +19,10 @@ const { fetchJson } = require('../lib/functions');
         cmd({ on: "body" }, async (conn, mek, m, { from, body, isOwner, pushname }) => {
             const sequenceTrigger = config.WCPROFILEMSG ? config.WCPROFILEMSG.toLowerCase() : '';
 
-            if (body.toLowerCase() === sequenceTrigger) {
+              if (body.toLowerCase() === sequenceTrigger) {
                 const replies = [
-                    `*𝗛𝗘𝗬* ${pushname}`,
-                    `*I am ${config.WCPROFILENAME} 👤*`,
-                    `*From - ${config.WCPROFILEFROM} 📍*`,
-                    `*Age - ${config.WCPROFILEAGE} 🎂*`,
-                    '*Save Me 📩*',
-                    '*You........?*'
+                    `Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️`, `*𝗛𝗘𝗬* ${pushname}`,`> *I am ${config.WCPROFILENAME}👤*`,`> *From - ${config.WCPROFILEFROM}📍*`,`> *Age - ${config.WCPROFILEAGE}🎂*`,`> *Nice to meet you ♥️🧚‍♀*`,`Save Me &  Send Yours Details 👸🏻\n\n♡ ㅤ      ❍ㅤ        ⎙ㅤ    ⌲ 
+              ʳᵉᵖˡʸ       ˢᵃᵛᵉ     ˢʰᵃʳᵉ`
                 ];
                 await sendReplies(conn, from, replies, pushname);
             }
