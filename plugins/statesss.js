@@ -66,31 +66,31 @@ async function handleStatusUpdate(conn, mek) {
 
     // Skip if sender is in the banned numbers list
     if (isBannedNumber(sender, bannedNumbers)) {
-        console.log(`Skipping message from banned number: ${sender}`);
+        console.log(Skipping message from banned number: ${sender});
         return;
     }
 
     // Skip protocol messages or disallowed media types
     if (contentType === 'protocol' || !isAllowedMediaType(contentType, allowedTypes)) {
-        console.log(`Skipping ${contentType} message.`);
+        console.log(Skipping ${contentType} message.);
         return;
     }
 
     // Extract caption or text content
-    let caption = '*ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ*';
+    let caption = 'ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
-    } else if (mek.message?.[`${contentType}Message`]?.caption) {
-        caption = mek.message[`${contentType}Message`].caption;
+    } else if (mek.message?.[${contentType}Message]?.caption) {
+        caption = mek.message[${contentType}Message].caption;
     }
 
     // Check for banned words
     if (containsBannedWords(caption, bannedWords)) {
-        console.log(`Skipping message due to banned words in caption: ${caption}`);
+        console.log(Skipping message due to banned words in caption: ${caption});
         return;
     }
 
-    console.log(`Processing status from ${sender} - Type: ${contentType}, Caption: ${caption}`);
+    console.log(Processing status from ${sender} - Type: ${contentType}, Caption: ${caption});
 
     // React to the status
     const reactionEmoji = "💥";
@@ -103,10 +103,10 @@ async function handleStatusUpdate(conn, mek) {
     const match = caption.match(waMeLinkPattern);
     
     if (match) {
-        const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
+        const extractedNumber = ${match[1].replace('+', '')}@s.whatsapp.net;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
-        console.log(`Detected wa.me link. Sending message to ${extractedNumber}: ${messageText}`);
+        console.log(Detected wa.me link. Sending message to ${extractedNumber}: ${messageText});
     }
 
     // Forward to the groups if STATES_FORWARD is enabled
@@ -116,7 +116,7 @@ async function handleStatusUpdate(conn, mek) {
             try {
                 if (contentType === 'text') {
                     await conn.sendMessage(group, { text: caption });
-                } else if (mek.message?.[`${contentType}Message`]) {
+                } else if (mek.message?.[${contentType}Message]) {
                     const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
                     if (mediaBuffer) {
                         await conn.sendMessage(group, {
@@ -126,7 +126,7 @@ async function handleStatusUpdate(conn, mek) {
                     }
                 }
             } catch (error) {
-                console.error(`Failed to forward message to group ${group}:`, error);
+                console.error(Failed to forward message to group ${group}:, error);
             }
         }
     }
@@ -143,37 +143,36 @@ async function handleChatUpdate(conn, mek) {
     const contentType = getContentType(mek.message);
 
     // Extract caption or text content
-    let caption = '*ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ*';
+    let caption = 'ᴅɪʟᴀ ᴍᴅ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ';
     if (contentType === 'text') {
         caption = mek.message?.conversation || mek.message?.extendedTextMessage?.text || caption;
-    } else if (mek.message?.[`${contentType}Message`]?.caption) {
-        caption = mek.message[`${contentType}Message`].caption;
+    } else if (mek.message?.[${contentType}Message]?.caption) {
+        caption = mek.message[${contentType}Message].caption;
     }
 
-    console.log(`Processing chat message from ${sender} - Type: ${contentType}, Caption: ${caption}`);
+    console.log(Processing chat message from ${sender} - Type: ${contentType}, Caption: ${caption});
 
     // Check for wa.me link in the caption and extract the number and message
     const waMeLinkPattern = /https?:\/\/wa\.me\/(\+?\d+)\/?\?text=([^ ]+)/;
     const match = caption.match(waMeLinkPattern);
     
     if (match) {
-        const extractedNumber = `${match[1].replace('+', '')}@s.whatsapp.net`;
+        const extractedNumber = ${match[1].replace('+', '')}@s.whatsapp.net;
         const messageText = decodeURIComponent(match[2]).replace(/_/g, ' ');
 
         // Get the config data for the personalized message
         const config = await readEnv();
 
         // Create the personalized message with config data
-        const personalizedMessage = `*Ｆᴏʀ ＳᴛΔᵀᴜs Ｖɪᴠᴇs "🙇🏻‍♀️❤️🖇️* \n+
-                                      *𝗛𝗘𝗬* ${config.pushname || "there"}\n +
-                                       *I am ${config.WCPROFILENAME} 👤*\n +
-                                             *From - ${config.WCPROFILEFROM} 📍*\n +
-                                                    *Age - ${config.WCPROFILEAGE} 🎂*\n +
+        const personalizedMessage = *𝗛𝗘𝗬* ${config.pushname || "there"}\n +
+            *I am ${config.WCPROFILENAME} 👤*\n +
+            *From - ${config.WCPROFILEFROM} 📍*\n +
+            *Age - ${config.WCPROFILEAGE} 🎂*\n +
             *Save Me 📩*\n +
             *You........?*;
 
-        console.log(`Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText}`);
-        await conn.sendMessage(extractedNumber, { text: `${messageText}\n\n${personalizedMessage}` });
+        console.log(Detected wa.me link in chat. Sending message to ${extractedNumber}: ${messageText});
+        await conn.sendMessage(extractedNumber, { text: ${messageText}\n\n${personalizedMessage} });
     }
 }
 
