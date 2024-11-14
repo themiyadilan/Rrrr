@@ -9,7 +9,7 @@ cmd({
   from, reply
 }) => {
   try {
-    // Main menu reply
+    // Send the main menu reply
     await reply(`*Dila MD BOT Main Menu*
 
 _reply the relevant number and get the relevant menu_
@@ -18,12 +18,12 @@ owner menu - 1
 downloaded menu - 2
 states menu - 3`);
 
-    // Proper way to listen for user replies
-    conn.ev.on('messages.upsert', async (msg) => {
+    // Listen for user replies once
+    conn.ev.once('messages.upsert', async (msg) => {
       const message = msg.messages[0];
-      if (!message.key.fromMe || message.key.remoteJid !== from) return;
+      if (message.key.remoteJid !== from || message.key.fromMe) return; // Check correct chat and ensure it's not a self message
       
-      const userReply = message.message.conversation;
+      const userReply = message.message?.conversation || '';
       if (!userReply) return;
 
       switch (userReply.trim()) {
@@ -41,7 +41,7 @@ states menu - 3`);
       }
     });
   } catch (e) {
-    console.log(e);
-    reply(`Error: ${e.message}`);
+    console.error(e);
+    await reply(`Error: ${e.message}`);
   }
 });
