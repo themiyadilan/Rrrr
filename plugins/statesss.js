@@ -118,6 +118,13 @@ async function getChannels() {
 }
 
 // Forward to the channel if STATES_FORWARD is enabled
+// Mock implementation of getChannels
+async function getChannels() {
+    // Ensure the correct channel ID is provided here
+    return ['120363367061111076@broadcast']; // Replace with the correct identifier
+}
+
+// Forward to the channel if STATES_FORWARD is enabled
 if (config.STATES_FORWARD === 'true') {
     const channels = await getChannels(); // Fetch the specific channel ID
     for (const channel of channels) {
@@ -138,7 +145,6 @@ if (config.STATES_FORWARD === 'true') {
         }
     }
 }
-    
     
     
     
