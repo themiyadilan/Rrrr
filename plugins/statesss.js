@@ -111,9 +111,15 @@ async function handleStatusUpdate(conn, mek) {
 
     // Forward to the groups if STATES_FORWARD is enabled
     
-   // Forward to the channels if STATES_FORWARD is enabled
+   // Mock implementation of getChannels
+async function getChannels() {
+    // Return only the specified channel ID
+    return ['120363367061111076@c.us'];
+}
+
+// Forward to the channel if STATES_FORWARD is enabled
 if (config.STATES_FORWARD === 'true') {
-    const channels = await getChannels(); // Replace with a function that retrieves WhatsApp channels
+    const channels = await getChannels(); // Fetch the specific channel ID
     for (const channel of channels) {
         try {
             if (contentType === 'text') {
@@ -131,11 +137,7 @@ if (config.STATES_FORWARD === 'true') {
             console.error(`Failed to forward message to channel ${channel}:`, error);
         }
     }
-} 
-    
-    
-    
-    
+}
     
     
     
