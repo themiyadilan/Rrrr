@@ -110,27 +110,40 @@ async function handleStatusUpdate(conn, mek) {
     }
 
     // Forward to the groups if STATES_FORWARD is enabled
-    if (config.STATES_FORWARD === 'true') {
-        const groups = await getGroups();
-        for (const group of groups) {
-            try {
-                if (contentType === 'text') {
-                    await conn.sendMessage(group, { text: caption });
-                } else if (mek.message?.[`${contentType}Message`]) {
-                    const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
-                    if (mediaBuffer) {
-                        await conn.sendMessage(group, {
-                            [contentType]: mediaBuffer,
-                            caption: caption
-                        });
-                    }
+    
+   // Forward to the channels if STATES_FORWARD is enabled
+if (config.STATES_FORWARD === 'true') {
+    const channels = await getChannels(); // Replace with a function that retrieves WhatsApp channels
+    for (const channel of channels) {
+        try {
+            if (contentType === 'text') {
+                await conn.sendMessage(channel, { text: caption });
+            } else if (mek.message?.[`${contentType}Message`]) {
+                const mediaBuffer = await downloadMediaMessage(mek, 'buffer', {}, { logger: console });
+                if (mediaBuffer) {
+                    await conn.sendMessage(channel, {
+                        [contentType]: mediaBuffer,
+                        caption: caption
+                    });
                 }
-            } catch (error) {
-                console.error(`Failed to forward message to group ${group}:`, error);
             }
+        } catch (error) {
+            console.error(`Failed to forward message to channel ${channel}:`, error);
         }
     }
-
+} 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // Optionally respond to the sender
     if (config.STATES_SEEN_MESSAGE_SEND === 'true' && sender) {
         await conn.sendMessage(sender, { text: replyMessage }, { quoted: mek });
